@@ -255,17 +255,47 @@ async def _finish_entry(update: Update, context: ContextTypes.DEFAULT_TYPE, tele
     if not item:
         return
 
-    # Generate AI summary from all raw messages
+    # Generate highlights from all raw messages
     raw = item.get("raw_messages") or []
     if raw:
-        summary = ai_parser.generate_summary(item["title"], raw)
-        database.update_item(item_id, {"summary": summary})
-        item["summary"] = summary
+        highlights, plain = ai_parser.generate_summary(item["title"], raw)
+        database.update_item(item_id, {"summary": plain})
+        item["summary"] = plain
+        item["highlights"] = highlights
+    else:
+        highlights = []
 
-    await update.message.reply_text(
-        f"✓ Saved to your library!\n\n_{item.get('summary', '')}_",
-        parse_mode="Markdown"
-    )
+    # Build the saved message
+    type_emoji = {"book": "📚", "film": "🎬", "show": "📺", "other": "✦"}
+    emoji = type_emoji.get(item.get("type"), "✦")
+    feeling_labels = {
+        "essential": "🔥 Essential", "loved": "❤️ Loved it", "good": "👍 Good",
+        "fine": "😐 Fine", "not_for_me": "👎 Not for me", "regret": "💀 Regret it"
+    }
+    revisit_labels = {"yes": "Would revisit ✓", "maybe": "Maybe revisit", "no": "Wouldn't revisit"}
+
+    title_line = f"{emoji} *{item['title']}*"
+    if item.get("creator"):
+        title_line += f" — {item['creator']}"
+    if item.get("year"):
+        title_line += f" · {item['year']}"
+
+    meta_parts = []
+    if item.get("feeling"):
+        meta_parts.append(feeling_labels.get(item["feeling"], ""))
+    if item.get("would_revisit"):
+        meta_parts.append(revisit_labels.get(item["would_revisit"], ""))
+    meta_line = " · ".join(p for p in meta_parts if p)
+
+    if highlights:
+        bullets = "\n".join(f"• {h}" for h in highlights)
+        msg = f"{title_line}\n{meta_line}\n\n{bullets}"
+    elif item.get("summary"):
+        msg = f"{title_line}\n{meta_line}\n\n_{item['summary']}_"
+    else:
+        msg = f"{title_line}\n{meta_line}\n\n_Saved to your library._"
+
+    await update.message.reply_text(msg, parse_mode="Markdown")
 
     # Generate vibe tags from summary
     if item.get("summary"):

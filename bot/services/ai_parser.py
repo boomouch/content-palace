@@ -43,13 +43,22 @@ Their message: "{message}"
 Ask them ONE follow-up question to help them reflect — something specific to what they said, not generic.
 Keep it short (1 sentence). Don't be formal. Sound like a curious friend."""
 
-SUMMARY_PROMPT = """Based on this conversation, write a 2-3 sentence personal summary of what this person thought about "{title}".
+SUMMARY_PROMPT = """Extract the key highlights from what this person said about "{title}".
 
 Their messages:
 {messages}
 
-Write in first person (as if they wrote it). Capture their actual feelings, specific observations, and any memorable details they mentioned.
-No fluff. No "The user said..." — just their thoughts, cleanly written."""
+Return a JSON array of 3-6 short highlight strings. Rules:
+- Each highlight is one punchy thought, in their voice (first person implied)
+- Keep specific details they mentioned (numbers, names, comparisons)
+- Don't paraphrase into generic statements — keep the flavour of what they actually said
+- No bullet symbols, no numbering — just the text
+- Max 12 words each
+
+Example output:
+["Rewatched 10 times and it never gets old", "Female characters written as real women, not male roles in disguise", "Surprisingly progressive for 2004", "Perfect blend of medicine nerd content and great storytelling"]
+
+JSON array only, no other text."""
 
 SUGGEST_PROMPT = """Based on what this person thought about "{title}" ({type}), suggest ONE related piece of content they might enjoy.
 
@@ -102,8 +111,9 @@ def get_reflection_question(title: str, item_type: str, message: str) -> str:
     return response.content[0].text.strip()
 
 
-def generate_summary(title: str, messages: list[str]) -> str:
-    """Generate a clean summary of the user's thoughts from raw messages."""
+def generate_summary(title: str, messages: list[str]) -> tuple[list[str], str]:
+    """Extract highlights and a plain summary from the user's messages.
+    Returns (highlights_list, plain_text_for_ai_context)."""
     messages_text = "\n".join(f"- {m}" for m in messages)
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
@@ -112,7 +122,14 @@ def generate_summary(title: str, messages: list[str]) -> str:
             title=title, messages=messages_text
         )}]
     )
-    return response.content[0].text.strip()
+    try:
+        highlights = json.loads(_clean_json(response.content[0].text))
+        plain = " · ".join(highlights)
+        return highlights, plain
+    except (json.JSONDecodeError, TypeError):
+        # Fallback: treat as plain text
+        plain = response.content[0].text.strip()
+        return [], plain
 
 
 def generate_suggestion(title: str, item_type: str, summary: str, feeling: str, vibe_tags: list) -> dict | None:
