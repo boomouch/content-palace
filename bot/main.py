@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 async def start(update, context):
+    from services.database import set_session_state
+    telegram_id = update.effective_user.id
+    set_session_state(telegram_id, "idle")
     await update.message.reply_text(
         "👋 Hey! I'm your Content Palace bot.\n\n"
         "Just tell me what you're reading or watching — in your own words.\n\n"
@@ -18,7 +21,8 @@ async def start(update, context):
         "• _started reading Wuthering Heights_\n"
         "• _finished Dune, absolutely loved it_\n"
         "• _want to watch Parasite at some point_\n"
-        "• _what did the ending of Inception mean?_",
+        "• _delete Dune_\n"
+        "• _update Dune rating 🔥_",
         parse_mode="Markdown"
     )
 

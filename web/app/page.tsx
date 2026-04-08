@@ -74,9 +74,9 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
       onClick={onClick}
       className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap"
       style={{
-        background: active ? 'var(--text)' : 'transparent',
-        color: active ? 'var(--bg)' : 'var(--text2)',
-        border: `1px solid ${active ? 'var(--text)' : 'var(--border-dark)'}`,
+        background: active ? 'var(--surface)' : 'transparent',
+        color: active ? 'var(--text-on-dark)' : 'var(--text2)',
+        border: `1px solid ${active ? 'var(--surface)' : 'var(--border)'}`,
       }}
     >
       {children}
@@ -91,7 +91,7 @@ function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
     <button
       onClick={onClick}
       className="w-full text-left rounded-xl overflow-hidden transition-transform active:scale-[0.97]"
-      style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}
+      style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}
     >
       <div className="w-full overflow-hidden" style={{ aspectRatio: '2/3' }}>
         {item.cover_url ? (
@@ -139,7 +139,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
       <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
       <div
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl overflow-y-auto"
-        style={{ background: 'var(--surface)', maxHeight: '88vh', boxShadow: '0 -4px 24px rgba(0,0,0,0.10)' }}
+        style={{ background: 'var(--surface)', maxHeight: '88vh' }}
       >
         <div className="p-5">
           <div className="w-8 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--border-dark)' }} />
@@ -150,7 +150,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
                 src={item.cover_url}
                 alt={item.title}
                 className="flex-shrink-0 w-20 rounded-lg object-cover"
-                style={{ aspectRatio: '2/3', boxShadow: 'var(--card-shadow)' }}
+                style={{ aspectRatio: '2/3' }}
               />
             )}
             <div className="flex-1 min-w-0">
@@ -317,7 +317,7 @@ function ProfilePage({ items }: { items: Item[] }) {
     <div className="px-4 pt-5 space-y-7 pb-4">
 
       {/* AI taste summary */}
-      <div className="rounded-xl p-4" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
+      <div className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
         <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Your taste</p>
         {summaryLoading ? (
           <div className="flex items-center gap-2">
@@ -338,7 +338,7 @@ function ProfilePage({ items }: { items: Item[] }) {
       {/* Counts */}
       <div className="grid grid-cols-4 gap-2">
         {byType.map(({ type, count }) => (
-          <div key={type} className="rounded-xl py-3 text-center" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
+          <div key={type} className="rounded-xl py-3 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
             <p className="text-lg">{TYPE_ICON[type]}</p>
             <p className="text-lg font-semibold mt-0.5" style={{ color: 'var(--text)' }}>{count}</p>
           </div>
@@ -372,7 +372,7 @@ function ProfilePage({ items }: { items: Item[] }) {
           <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Favourite genres</p>
           <div className="flex flex-wrap gap-2">
             {topGenres.map((g) => (
-              <span key={g} className="text-xs px-2.5 py-1.5 rounded-lg capitalize" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)', color: 'var(--chip-text)' }}>{g}</span>
+              <span key={g} className="text-xs px-2.5 py-1.5 rounded-lg capitalize" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)', color: 'var(--chip-text)' }}>{g}</span>
             ))}
           </div>
         </div>
@@ -384,7 +384,7 @@ function ProfilePage({ items }: { items: Item[] }) {
           <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Your vibes</p>
           <div className="flex flex-wrap gap-2">
             {topVibes.map((t) => (
-              <span key={t} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)', color: 'var(--chip-text)' }}>{t}</span>
+              <span key={t} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)', color: 'var(--chip-text)' }}>{t}</span>
             ))}
           </div>
         </div>
@@ -396,7 +396,7 @@ function ProfilePage({ items }: { items: Item[] }) {
           <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Creators you keep coming back to</p>
           <div className="space-y-1.5">
             {topCreators.map(([creator, count]) => (
-              <div key={creator} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
+              <div key={creator} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
                 <span className="text-sm" style={{ color: 'var(--text)' }}>{creator}</span>
                 <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>×{count}</span>
               </div>
@@ -509,8 +509,8 @@ export default function Home() {
                   onClick={() => setFeelingFilters(toggleSet(feelingFilters, f))}
                   className="flex-shrink-0 text-base px-2 py-0.5 rounded-full"
                   style={{
-                    background: feelingFilters.has(f) ? 'var(--text)' : 'transparent',
-                    border: `1px solid ${feelingFilters.has(f) ? 'var(--text)' : 'var(--border-dark)'}`,
+                    background: feelingFilters.has(f) ? 'var(--surface)' : 'transparent',
+                    border: `1px solid ${feelingFilters.has(f) ? 'var(--surface)' : 'var(--border)'}`,
                   }}
                 >
                   {FEELING_EMOJI[f]}
@@ -574,7 +574,7 @@ export default function Home() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-30 flex"
         style={{
-          background: 'rgba(253,252,250,0.92)',
+          background: 'rgba(250,246,240,0.92)',
           backdropFilter: 'blur(12px)',
           borderTop: '1px solid var(--border)',
           paddingBottom: 'env(safe-area-inset-bottom)',
