@@ -21,7 +21,6 @@ def get_session(telegram_id: int, telegram_handle: str = None) -> dict:
     result = db.table("telegram_sessions").select("*").eq("telegram_id", telegram_id).execute()
     if result.data:
         return result.data[0]
-    # Create session if it doesn't exist
     new_session = {"telegram_id": telegram_id, "state": "idle", "telegram_handle": telegram_handle}
     db.table("telegram_sessions").insert(new_session).execute()
     return new_session
@@ -45,6 +44,11 @@ def update_item(item_id: str, data: dict) -> dict:
     return result.data[0] if result.data else None
 
 
+def delete_item(item_id: str):
+    db = get_db()
+    db.table("items").delete().eq("id", item_id).execute()
+
+
 def get_item(item_id: str) -> dict:
     db = get_db()
     result = db.table("items").select("*").eq("id", item_id).execute()
@@ -52,7 +56,7 @@ def get_item(item_id: str) -> dict:
 
 
 def find_existing_item(title: str, item_type: str, telegram_id: int) -> dict | None:
-    """Fuzzy search for an existing item to avoid duplicates."""
+    """Fuzzy search for a single existing item to avoid duplicates."""
     db = get_db()
     result = db.table("items").select("*") \
         .ilike("title", f"%{title}%") \
@@ -63,8 +67,18 @@ def find_existing_item(title: str, item_type: str, telegram_id: int) -> dict | N
     return result.data[0] if result.data else None
 
 
+def find_items_fuzzy(title: str, telegram_id: int, limit: int = 5) -> list[dict]:
+    """Fuzzy search across all types, returns up to `limit` matches."""
+    db = get_db()
+    result = db.table("items").select("*") \
+        .ilike("title", f"%{title}%") \
+        .eq("telegram_id", telegram_id) \
+        .limit(limit) \
+        .execute()
+    return result.data or []
+
+
 def append_raw_message(item_id: str, message: str):
-    """Append a new message to the item's raw_messages array."""
     db = get_db()
     item = get_item(item_id)
     if item:
