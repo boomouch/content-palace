@@ -31,6 +31,7 @@ Rules:
 - "gave up", "stopped", "couldn't finish", "abandoned" → status: abandoned
 - If message is a question about a book/film/show (e.g. "what did that ending mean?") → is_question: true
 - If a URL is present, put it in source_url and infer type from domain
+- YouTube channels, podcasts, newsletters, articles, blogs → type: other (NOT show)
 - Map sentiment to feeling: "loved/amazing/incredible/favourite" → loved, "great/really good" → good, "fine/ok/decent/alright" → fine, "didn't like/bad" → not_for_me, "waste of time/hate" → regret, "must read/essential/life-changing" → essential
 - If type is ambiguous (e.g. could be book or show), set confidence: low and describe in ambiguity
 - If no clear media item is mentioned, set title: null"""

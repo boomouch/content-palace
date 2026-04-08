@@ -65,8 +65,8 @@ function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
         )}
         {emoji && (
           <span
-            className="absolute bottom-1 right-1 text-sm leading-none"
-            style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))' }}
+            className="absolute bottom-1.5 right-1.5 text-sm leading-none px-1 py-0.5 rounded-md"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}
           >
             {emoji}
           </span>
