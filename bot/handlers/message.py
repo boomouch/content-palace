@@ -84,6 +84,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 database.set_session_state(telegram_id, "reflecting", item_id, payload)
                 await update.message.reply_text(question)
             else:
+                # Reflection done — generate summary + vibe tags now from what we have
+                context.application.create_task(
+                    _generate_summary_and_tags(item_id, item["title"], reflection_messages)
+                )
                 await _ask_feeling(update, telegram_id, item_id)
         return
 
@@ -263,6 +267,36 @@ async def _handle_add_note(update: Update, context: ContextTypes.DEFAULT_TYPE, t
             "Found multiple matches. Which one?",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+
+async def _generate_summary_and_tags(item_id: str, title: str, messages: list[str]):
+    """Generate summary + vibe tags from reflection messages. Called after Q2 is answered."""
+    try:
+        item = database.get_item(item_id)
+        if not item:
+            return
+        all_messages = list(item.get("raw_messages") or [])
+        highlights, plain = ai_parser.generate_summary(title, all_messages)
+        summary = json.dumps(highlights) if highlights else plain
+        database.update_item(item_id, {"summary": summary})
+        item["summary"] = summary
+
+        # Generate vibe tags
+        import anthropic as anth, os as _os
+        _client = anth.Anthropic(api_key=_os.getenv("ANTHROPIC_API_KEY"))
+        response = _client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=100,
+            messages=[{"role": "user", "content": f"""Based on this reflection about "{title}": {summary}
+
+Return 3-4 vibe tags as a JSON array. Short, evocative, lowercase.
+Examples: ["slow burn", "dark", "atmospheric", "thought-provoking", "funny", "emotional", "rewatchable", "disturbing", "hopeful", "dense"]
+JSON only."""}]
+        )
+        tags = json.loads(response.content[0].text.strip())
+        database.update_item(item_id, {"vibe_tags": tags})
+    except Exception:
+        pass
 
 
 async def _regenerate_summary(update: Update, item_id: str):

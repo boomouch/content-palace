@@ -85,7 +85,7 @@ async def _fetch_book(title: str) -> dict:
     async with httpx.AsyncClient() as http:
         resp = await http.get(
             f"{OL_BASE}/search.json",
-            params={"title": title, "limit": 1, "fields": "key,title,author_name,first_publish_year,cover_i,subject,description"}
+            params={"title": title, "limit": 1, "fields": "key,title,author_name,first_publish_year,cover_i,subject"}
         )
         data = resp.json()
 
@@ -96,17 +96,35 @@ async def _fetch_book(title: str) -> dict:
     top = results[0]
     cover_id = top.get("cover_i")
     cover_url = f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg" if cover_id else None
-
     authors = top.get("author_name", [])
     subjects = top.get("subject", [])[:5]
 
+    # Fetch description from the work record
+    description = None
+    work_key = top.get("key")
+    if work_key:
+        try:
+            async with httpx.AsyncClient() as http:
+                work_resp = await http.get(f"{OL_BASE}{work_key}.json", timeout=5)
+                work_data = work_resp.json()
+                raw_desc = work_data.get("description")
+                if isinstance(raw_desc, dict):
+                    description = raw_desc.get("value")
+                elif isinstance(raw_desc, str):
+                    description = raw_desc
+                if description:
+                    description = description[:500]  # cap length
+        except Exception:
+            pass
+
     return {
-        "external_id": top.get("key"),
+        "external_id": work_key,
         "external_source": "openlibrary",
         "title": top.get("title", title),
         "creator": authors[0] if authors else None,
         "year": top.get("first_publish_year"),
         "cover_url": cover_url,
+        "description": description,
         "genres": [s.lower() for s in subjects],
         "metadata_raw": top,
     }
