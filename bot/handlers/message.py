@@ -22,9 +22,11 @@ REVISIT_LABELS = {
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = update.effective_user.id
+    telegram_handle = update.effective_user.username
+    lang = update.effective_user.language_code or "en"
     text = update.message.text.strip()
 
-    session = database.get_session(telegram_id)
+    session = database.get_session(telegram_id, telegram_handle)
     state = session.get("state", "idle")
 
     # ── State: waiting for feeling rating ──
@@ -71,17 +73,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if parsed.get("is_question"):
         item = None
         if parsed.get("title"):
-            item = database.find_existing_item(parsed["title"], parsed.get("type", "book"))
-        answer = ai_parser.answer_content_question(text, item)
+            item = database.find_existing_item(parsed["title"], parsed.get("type", "book"), telegram_id)
+        answer = ai_parser.answer_content_question(text, item, lang)
         await update.message.reply_text(answer)
         return
 
     # No media item detected
     if not parsed.get("title") or parsed.get("confidence") == "low" and parsed.get("ambiguity"):
         if parsed.get("ambiguity"):
-            await update.message.reply_text(f"Just to clarify — {parsed['ambiguity']}")
+            await update.message.reply_text(parsed["ambiguity"])
         else:
-            await update.message.reply_text("Hmm, I'm not sure what to log. Could you be more specific?")
+            await update.message.reply_text(ai_parser.quick_reply("not_understood", lang))
         return
 
     title = parsed["title"]
@@ -89,7 +91,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status = parsed.get("status", "want")
 
     # Check for duplicate
-    existing = database.find_existing_item(title, item_type)
+    existing = database.find_existing_item(title, item_type, telegram_id)
 
     if existing:
         # Update existing item
@@ -115,6 +117,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "status": status,
             "raw_messages": [text],
             "source_url": parsed.get("source_url"),
+            "telegram_id": telegram_id,
         }
         if status == "in_progress":
             item_data["started_at"] = today
@@ -138,14 +141,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if status in ("done", "abandoned") and not already_reflected:
         database.set_session_state(telegram_id, "reflecting", item_id, {"reflection_count": 0})
         context.application.create_task(
-            _send_reflection_question(update, telegram_id, item_id, title, item_type, text)
+            _send_reflection_question(update, telegram_id, item_id, title, item_type, text, lang)
         )
 
 
-async def _send_reflection_question(update: Update, telegram_id: int, item_id: str, title: str, item_type: str, text: str):
+async def _send_reflection_question(update: Update, telegram_id: int, item_id: str, title: str, item_type: str, text: str, lang: str = "en"):
     """Generate and send reflection question in background."""
     try:
-        question = ai_parser.get_reflection_question(title, item_type, text)
+        question = ai_parser.get_reflection_question(title, item_type, text, lang)
         await update.message.reply_text(question)
     except Exception:
         pass
@@ -339,8 +342,10 @@ JSON only, no other text."""}]
         database.save_item  # just reference to avoid unused import warning
         from services.database import get_db
         db = get_db()
+        item_full = database.get_item(item_id)
         db.table("suggestions").insert({
             "source_item_id": item_id,
+            "telegram_id": item_full.get("telegram_id") if item_full else None,
             "suggested_title": suggestion["suggested_title"],
             "suggested_type": suggestion["suggested_type"],
             "reason": suggestion["reason"],

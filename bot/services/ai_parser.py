@@ -41,7 +41,8 @@ They finished: {title} ({type})
 Their message: "{message}"
 
 Ask them ONE follow-up question to help them reflect — something specific to what they said, not generic.
-Keep it short (1 sentence). Don't be formal. Sound like a curious friend."""
+Keep it short (1 sentence). Don't be formal. Sound like a curious friend.
+IMPORTANT: Reply in this language: {lang}"""
 
 SUMMARY_PROMPT = """Extract the key highlights from what this person said about "{title}".
 
@@ -99,16 +100,29 @@ def parse_message(message: str) -> dict:
         return {"title": None, "confidence": "low", "is_question": False}
 
 
-def get_reflection_question(title: str, item_type: str, message: str) -> str:
+def get_reflection_question(title: str, item_type: str, message: str, lang: str = "en") -> str:
     """Generate a follow-up reflection question after finishing something."""
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=150,
         messages=[{"role": "user", "content": REFLECT_PROMPT.format(
-            title=title, type=item_type, message=message
+            title=title, type=item_type, message=message, lang=lang
         )}]
     )
     return response.content[0].text.strip()
+
+
+def quick_reply(key: str, lang: str = "en") -> str:
+    """Return a short UI message in the right language using Claude."""
+    messages = {
+        "not_understood": {
+            "en": "Hmm, I'm not sure what to log. Could you be more specific?",
+            "ru": "Хм, не совсем понял что добавить. Можешь уточнить?",
+        }
+    }
+    msg = messages.get(key, {})
+    # Try exact match, then prefix match, then English fallback
+    return msg.get(lang) or msg.get(lang[:2]) or msg.get("en", "")
 
 
 def generate_summary(title: str, messages: list[str]) -> tuple[list[str], str]:
@@ -154,11 +168,11 @@ def generate_suggestion(title: str, item_type: str, summary: str, feeling: str, 
         return None
 
 
-def answer_content_question(question: str, item: dict | None) -> str:
+def answer_content_question(question: str, item: dict | None, lang: str = "en") -> str:
     """Answer a question about a book/film/show."""
-    context = ""
+    context = f"Reply in this language: {lang}\n\n"
     if item:
-        context = f"The user is asking about: {item['title']} ({item['type']}, {item.get('year', 'unknown year')})\n"
+        context += f"The user is asking about: {item['title']} ({item['type']}, {item.get('year', 'unknown year')})\n"
         if item.get("description"):
             context += f"Description: {item['description']}\n"
         if item.get("summary"):

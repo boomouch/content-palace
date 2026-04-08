@@ -16,13 +16,13 @@ def get_db() -> Client:
     return _client
 
 
-def get_session(telegram_id: int) -> dict:
+def get_session(telegram_id: int, telegram_handle: str = None) -> dict:
     db = get_db()
     result = db.table("telegram_sessions").select("*").eq("telegram_id", telegram_id).execute()
     if result.data:
         return result.data[0]
     # Create session if it doesn't exist
-    new_session = {"telegram_id": telegram_id, "state": "idle"}
+    new_session = {"telegram_id": telegram_id, "state": "idle", "telegram_handle": telegram_handle}
     db.table("telegram_sessions").insert(new_session).execute()
     return new_session
 
@@ -51,12 +51,13 @@ def get_item(item_id: str) -> dict:
     return result.data[0] if result.data else None
 
 
-def find_existing_item(title: str, item_type: str) -> dict | None:
+def find_existing_item(title: str, item_type: str, telegram_id: int) -> dict | None:
     """Fuzzy search for an existing item to avoid duplicates."""
     db = get_db()
     result = db.table("items").select("*") \
         .ilike("title", f"%{title}%") \
         .eq("type", item_type) \
+        .eq("telegram_id", telegram_id) \
         .limit(1) \
         .execute()
     return result.data[0] if result.data else None
