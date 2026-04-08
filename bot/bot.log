@@ -1,0 +1,707 @@
+2026-04-08 12:14:40,869 INFO Content Palace bot is running...
+2026-04-08 12:14:41,042 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getMe "HTTP/1.1 200 OK"
+2026-04-08 12:14:41,055 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/deleteWebhook "HTTP/1.1 200 OK"
+2026-04-08 12:14:41,057 INFO Application started
+2026-04-08 12:14:51,098 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:15:01,126 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:15:10,547 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:15:12,112 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions?select=%2A&telegram_id=eq.2013906607 "HTTP/2 200 OK"
+2026-04-08 12:15:13,152 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-04-08 12:15:13,336 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?select=%2A&title=ilike.%25Wuthering%20Heights%25&type=eq.book&limit=1 "HTTP/2 200 OK"
+2026-04-08 12:15:13,446 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items "HTTP/2 201 Created"
+2026-04-08 12:15:13,841 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/sendMessage "HTTP/1.1 200 OK"
+2026-04-08 12:15:14,237 INFO HTTP Request: GET https://openlibrary.org/search.json?title=Wuthering%20Heights&limit=1&fields=key%2Ctitle%2Cauthor_name%2Cfirst_publish_year%2Ccover_i%2Csubject%2Cdescription "HTTP/1.1 200 OK"
+2026-04-08 12:15:14,363 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.2bbffaee-2fdc-4ba9-bbb3-dc2590bd5ad6 "HTTP/2 200 OK"
+2026-04-08 12:15:23,770 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:15:33,782 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:15:43,797 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:15:53,813 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:16:03,832 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:16:13,849 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:16:23,869 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:16:33,882 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:16:43,895 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:16:53,909 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:17:03,925 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:17:13,939 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:17:23,951 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:17:33,961 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:17:43,976 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:17:53,988 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:18:04,007 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:18:07,792 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:18:08,059 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions?select=%2A&telegram_id=eq.2013906607 "HTTP/2 200 OK"
+2026-04-08 12:18:09,663 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-04-08 12:18:09,765 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?select=%2A&title=ilike.%25Mentalist%25&type=eq.show&limit=1 "HTTP/2 200 OK"
+2026-04-08 12:18:09,860 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items "HTTP/2 201 Created"
+2026-04-08 12:18:10,313 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/sendMessage "HTTP/1.1 200 OK"
+2026-04-08 12:18:10,397 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions "HTTP/2 200 OK"
+2026-04-08 12:18:11,435 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-04-08 12:18:11,441 INFO HTTP Request: GET https://api.themoviedb.org/3/search/tv?query=Mentalist&language=en-US&page=1 "HTTP/1.1 200 OK"
+2026-04-08 12:18:11,901 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/sendMessage "HTTP/1.1 200 OK"
+2026-04-08 12:18:12,021 INFO HTTP Request: GET https://api.themoviedb.org/3/tv/5920 "HTTP/1.1 200 OK"
+2026-04-08 12:18:12,107 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:18:20,254 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:18:30,269 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:18:40,283 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:18:50,296 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:19:00,310 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:19:10,326 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:19:20,342 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:19:30,366 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:19:40,382 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:19:50,395 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:20:30,392 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:20:45,430 ERROR No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 72, in map_httpcore_exceptions
+    yield
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 377, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 101, in handle_async_request
+    raise exc
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 276, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1585, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1674, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1702, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1739, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1776, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 376, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 89, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 333, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 300, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-04-08 12:20:46,452 ERROR No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 72, in map_httpcore_exceptions
+    yield
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 377, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 101, in handle_async_request
+    raise exc
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 276, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1585, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1674, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1702, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1739, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1776, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 376, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 89, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 333, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 300, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-04-08 12:20:47,958 ERROR No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 72, in map_httpcore_exceptions
+    yield
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 377, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 101, in handle_async_request
+    raise exc
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 276, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1585, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1674, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1702, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1739, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1776, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 376, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 89, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 333, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 300, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-04-08 12:20:50,226 ERROR No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 72, in map_httpcore_exceptions
+    yield
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 377, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 101, in handle_async_request
+    raise exc
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 276, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1585, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1674, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1702, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1739, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1776, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 376, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 89, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 333, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 300, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-04-08 12:20:53,620 ERROR No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 72, in map_httpcore_exceptions
+    yield
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 377, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 101, in handle_async_request
+    raise exc
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 276, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1585, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1674, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1702, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1739, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1776, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 376, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 89, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 333, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 300, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-04-08 12:20:58,702 ERROR No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 72, in map_httpcore_exceptions
+    yield
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 377, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 101, in handle_async_request
+    raise exc
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_async\connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_backends\anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 276, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1585, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1674, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1702, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1739, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_client.py", line 1776, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 376, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\httpx\_transports\default.py", line 89, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_baserequest.py", line 333, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\julys\Documents\Projects\content-palace\bot\.venv\Lib\site-packages\telegram\request\_httpxrequest.py", line 300, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-04-08 12:21:06,440 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:21:06,796 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions?select=%2A&telegram_id=eq.2013906607 "HTTP/2 200 OK"
+2026-04-08 12:21:06,868 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?select=%2A&id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:21:06,944 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:21:07,021 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?select=%2A&id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:21:08,059 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-04-08 12:21:08,134 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions "HTTP/2 200 OK"
+2026-04-08 12:21:08,231 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/sendMessage "HTTP/1.1 200 OK"
+2026-04-08 12:21:18,153 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:21:28,168 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:21:38,182 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:21:48,196 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:21:58,216 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:22:08,230 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:22:18,251 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:22:28,271 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:22:38,288 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:22:48,303 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:22:58,321 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:08,341 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:18,369 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:28,382 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:31,069 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:31,499 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions?select=%2A&telegram_id=eq.2013906607 "HTTP/2 200 OK"
+2026-04-08 12:23:31,581 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?select=%2A&id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:23:31,669 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:23:31,741 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?select=%2A&id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:23:31,826 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions "HTTP/2 200 OK"
+2026-04-08 12:23:31,929 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/sendMessage "HTTP/1.1 200 OK"
+2026-04-08 12:23:41,846 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:51,858 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:56,210 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:23:56,262 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/answerCallbackQuery "HTTP/1.1 200 OK"
+2026-04-08 12:23:56,391 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:23:56,465 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions "HTTP/2 200 OK"
+2026-04-08 12:23:56,505 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/editMessageText "HTTP/1.1 200 OK"
+2026-04-08 12:24:01,301 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:24:01,375 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/answerCallbackQuery "HTTP/1.1 200 OK"
+2026-04-08 12:24:01,455 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:24:01,529 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions "HTTP/2 200 OK"
+2026-04-08 12:24:01,580 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/editMessageText "HTTP/1.1 200 OK"
+2026-04-08 12:24:11,318 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:24:21,339 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:24:31,352 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:24:41,372 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:24:51,385 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:25:01,395 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:28:59,482 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:28:59,500 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:28:59,796 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions?select=%2A&telegram_id=eq.2013906607 "HTTP/2 200 OK"
+2026-04-08 12:28:59,879 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:28:59,941 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/telegram_sessions "HTTP/2 200 OK"
+2026-04-08 12:29:00,015 INFO HTTP Request: GET https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?select=%2A&id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:29:03,213 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-04-08 12:29:03,284 INFO HTTP Request: PATCH https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/items?id=eq.a907a6d3-862e-4381-9976-c5245159d398 "HTTP/2 200 OK"
+2026-04-08 12:29:03,395 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/sendMessage "HTTP/1.1 200 OK"
+2026-04-08 12:29:04,336 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-04-08 12:29:07,335 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-04-08 12:29:07,445 INFO HTTP Request: POST https://wiuafyyhdhpjliilvegv.supabase.co/rest/v1/suggestions "HTTP/2 201 Created"
+2026-04-08 12:29:13,306 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:29:23,320 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:29:33,335 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:29:43,354 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:29:53,369 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:30:03,394 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:30:13,408 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:30:23,423 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getUpdates "HTTP/1.1 200 OK"
+2026-04-08 12:35:51,818 INFO Content Palace bot is running...
+2026-04-08 12:35:52,017 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/getMe "HTTP/1.1 200 OK"
+2026-04-08 12:35:52,033 INFO HTTP Request: POST https://api.telegram.org/bot8736384711:AAEF2g9EMtpNllQoaiqDdZGid247TpwWw3A/deleteWebhook "HTTP/1.1 200 OK"
+2026-04-08 12:35:52,035 INFO Application started
