@@ -3,18 +3,19 @@
 @import "tailwindcss";
 
 :root {
-  --bg:           #faf6f0;
-  --surface:      #1e150e;
-  --surface2:     #2e2018;
-  --border:       #e5ddd0;
-  --border-dark:  #3a2820;
-  --text:         #1e150e;
-  --text-on-dark: #f5f0e8;
-  --text2:        #9b8f82;
-  --text2-dark:   #6a5a4a;
-  --accent:       #c9922a;
-  --accent-dim:   rgba(201,146,42,0.12);
-  --chip-text:    #b8a690;
+  --bg:           #FDFCFA;
+  --surface:      #FFFFFF;
+  --surface2:     #F5F4F1;
+  --border:       #EDEBE7;
+  --border-dark:  #E2DFD9;
+  --text:         #18160F;
+  --text-on-dark: #18160F;
+  --text2:        #857F75;
+  --text2-dark:   #A09890;
+  --accent:       #B87C20;
+  --accent-dim:   rgba(184,124,32,0.10);
+  --chip-text:    #5A5450;
+  --card-shadow:  0 1px 3px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
 }
 
 * { box-sizing: border-box; }

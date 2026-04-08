@@ -347,6 +347,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ── Feeling rating ──
     if data.startswith("feeling:"):
         _, item_id, feeling = data.split(":")
+        # Map legacy values from old cached Telegram buttons
+        feeling = {"good": "average", "fine": "average"}.get(feeling, feeling)
         database.update_item(item_id, {"feeling": feeling})
         keyboard = [[
             InlineKeyboardButton(label, callback_data=f"revisit:{item_id}:{key}")

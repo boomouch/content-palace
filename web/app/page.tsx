@@ -47,7 +47,6 @@ const STATUS_LABEL: Record<string, string> = {
 
 const FEELINGS = ['essential', 'loved', 'average', 'not_for_me', 'regret'] as const
 
-// ── Multi-select pill toggle ──
 function toggleSet(set: Set<string>, value: string): Set<string> {
   const next = new Set(set)
   if (next.has(value)) next.delete(value)
@@ -55,40 +54,29 @@ function toggleSet(set: Set<string>, value: string): Set<string> {
   return next
 }
 
-// ── Filter row with label ──
+// ── Filter row ──
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 px-5 py-1.5">
-      <span
-        className="text-xs uppercase tracking-widest flex-shrink-0 w-14"
-        style={{ color: 'var(--text2)' }}
-      >
+    <div className="flex items-center gap-2 px-4 py-1.5">
+      <span className="text-xs w-12 flex-shrink-0" style={{ color: 'var(--text2)' }}>
         {label}
       </span>
-      <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {children}
       </div>
     </div>
   )
 }
 
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
+function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full transition-colors whitespace-nowrap"
+      className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap"
       style={{
-        background: active ? 'var(--accent-dim)' : 'transparent',
-        color: active ? 'var(--accent)' : 'var(--text2)',
-        border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+        background: active ? 'var(--text)' : 'transparent',
+        color: active ? 'var(--bg)' : 'var(--text2)',
+        border: `1px solid ${active ? 'var(--text)' : 'var(--border-dark)'}`,
       }}
     >
       {children}
@@ -102,10 +90,10 @@ function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-lg overflow-hidden transition-transform active:scale-[0.97]"
-      style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}
+      className="w-full text-left rounded-xl overflow-hidden transition-transform active:scale-[0.97]"
+      style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}
     >
-      <div className="w-full overflow-hidden relative" style={{ aspectRatio: '2/3' }}>
+      <div className="w-full overflow-hidden" style={{ aspectRatio: '2/3' }}>
         {item.cover_url ? (
           <img src={item.cover_url} alt={item.title} className="w-full h-full object-cover" />
         ) : (
@@ -116,26 +104,14 @@ function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
             {TYPE_ICON[item.type] || '◆'}
           </div>
         )}
-        {emoji && (
-          <span
-            className="absolute bottom-1.5 right-1.5 text-sm leading-none px-1 py-0.5 rounded-md"
-            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}
-          >
-            {emoji}
-          </span>
-        )}
       </div>
       <div className="p-2">
-        <h3
-          className="font-medium text-xs leading-snug line-clamp-2"
-          style={{ color: 'var(--text-on-dark)' }}
-        >
+        <h3 className="font-medium text-xs leading-snug line-clamp-2" style={{ color: 'var(--text)' }}>
+          {emoji && <span className="mr-0.5">{emoji}</span>}
           {item.title}
         </h3>
         {item.year && (
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text2-dark)' }}>
-            {item.year}
-          </p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>{item.year}</p>
         )}
       </div>
     </button>
@@ -160,13 +136,13 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.65)' }} onClick={onClose} />
+      <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
       <div
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl overflow-y-auto"
-        style={{ background: 'var(--surface)', maxHeight: '88vh' }}
+        style={{ background: 'var(--surface)', maxHeight: '88vh', boxShadow: '0 -4px 24px rgba(0,0,0,0.10)' }}
       >
         <div className="p-5">
-          <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--border-dark)' }} />
+          <div className="w-8 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--border-dark)' }} />
 
           <div className="flex gap-4 mb-5">
             {item.cover_url && (
@@ -174,34 +150,34 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
                 src={item.cover_url}
                 alt={item.title}
                 className="flex-shrink-0 w-20 rounded-lg object-cover"
-                style={{ aspectRatio: '2/3' }}
+                style={{ aspectRatio: '2/3', boxShadow: 'var(--card-shadow)' }}
               />
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs mb-1" style={{ color: 'var(--text2-dark)' }}>
+              <p className="text-xs mb-1" style={{ color: 'var(--text2)' }}>
                 {TYPE_ICON[item.type]} {item.type}{item.year ? ` · ${item.year}` : ''}
               </p>
               <h2
-                className="font-bold text-lg leading-tight mb-1"
-                style={{ color: 'var(--text-on-dark)', fontFamily: "'DM Serif Display', serif" }}
+                className="font-bold text-xl leading-tight mb-1"
+                style={{ color: 'var(--text)', fontFamily: "'DM Serif Display', serif" }}
               >
                 {item.title}
               </h2>
               {item.creator && (
-                <p className="text-sm mb-2" style={{ color: 'var(--chip-text)' }}>{item.creator}</p>
+                <p className="text-sm mb-2" style={{ color: 'var(--text2)' }}>{item.creator}</p>
               )}
               <div className="flex flex-wrap gap-2">
                 {item.feeling && (
                   <span
-                    className="text-xs px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: 'rgba(201,146,42,0.25)', color: 'var(--accent)' }}
+                    className="text-xs px-2.5 py-1 rounded-full font-medium"
+                    style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
                   >
                     {FEELING_LABEL[item.feeling]}
                   </span>
                 )}
                 {item.would_revisit && (
                   <span
-                    className="text-xs px-2 py-0.5 rounded-full"
+                    className="text-xs px-2.5 py-1 rounded-full"
                     style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}
                   >
                     {REVISIT_LABEL[item.would_revisit]}
@@ -213,8 +189,8 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
           {item.highlight_quote && (
             <blockquote
-              className="mb-5 pl-3 italic text-sm leading-relaxed"
-              style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text-on-dark)' }}
+              className="mb-5 pl-4 italic text-sm leading-relaxed"
+              style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text)' }}
             >
               &ldquo;{item.highlight_quote}&rdquo;
             </blockquote>
@@ -222,10 +198,10 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
           {highlights.length > 0 && (
             <div className="mb-5">
-              <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2-dark)' }}>Thoughts</p>
+              <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Thoughts</p>
               <ul className="space-y-2">
                 {highlights.map((h, i) => (
-                  <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--text-on-dark)' }}>
+                  <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--text)' }}>
                     <span style={{ color: 'var(--accent)', flexShrink: 0 }}>·</span>
                     {h}
                   </li>
@@ -236,17 +212,17 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
           {!highlights.length && item.summary && (
             <div className="mb-5">
-              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>Thoughts</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-on-dark)' }}>{item.summary}</p>
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>Thoughts</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>{item.summary}</p>
             </div>
           )}
 
           {item.vibe_tags && item.vibe_tags.length > 0 && (
             <div className="mb-5">
-              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>Vibes</p>
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>Vibes</p>
               <div className="flex flex-wrap gap-2">
                 {item.vibe_tags.map((tag) => (
-                  <span key={tag} className="text-xs px-2 py-1 rounded-lg" style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}>{tag}</span>
+                  <span key={tag} className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}>{tag}</span>
                 ))}
               </div>
             </div>
@@ -254,10 +230,10 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
           {item.genres && item.genres.length > 0 && (
             <div className="mb-5">
-              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>Genres</p>
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>Genres</p>
               <div className="flex flex-wrap gap-2">
                 {item.genres.map((g) => (
-                  <span key={g} className="text-xs px-2 py-1 rounded-lg" style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}>{g}</span>
+                  <span key={g} className="text-xs px-2.5 py-1 rounded-lg capitalize" style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}>{g}</span>
                 ))}
               </div>
             </div>
@@ -265,8 +241,8 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
           {item.description && (
             <div className="mb-5">
-              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>About</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--chip-text)' }}>{item.description}</p>
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>About</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)' }}>{item.description}</p>
             </div>
           )}
 
@@ -279,79 +255,92 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
 // ── Profile tab ──
 function ProfilePage({ items }: { items: Item[] }) {
+  const [tasteSummary, setTasteSummary] = useState<string | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+
   const rated = items.filter((i) => i.feeling)
   const loved = items.filter((i) => i.feeling === 'essential' || i.feeling === 'loved')
 
-  // Counts by type
   const byType = ['book', 'film', 'show', 'other'].map((t) => ({
-    type: t,
-    count: items.filter((i) => i.type === t).length,
+    type: t, count: items.filter((i) => i.type === t).length,
   })).filter((x) => x.count > 0)
 
-  // Rating distribution
   const byFeeling = FEELINGS.map((f) => ({
-    feeling: f,
-    count: rated.filter((i) => i.feeling === f).length,
+    feeling: f, count: rated.filter((i) => i.feeling === f).length,
   })).filter((x) => x.count > 0)
   const maxFeelingCount = Math.max(...byFeeling.map((x) => x.count), 1)
 
-  // Top genres from loved/essential items
   const genreMap: Record<string, number> = {}
-  loved.forEach((item) => {
-    (item.genres || []).forEach((g) => {
-      genreMap[g] = (genreMap[g] || 0) + 1
-    })
-  })
-  const topGenres = Object.entries(genreMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([g]) => g)
+  loved.forEach((item) => { (item.genres || []).forEach((g) => { genreMap[g] = (genreMap[g] || 0) + 1 }) })
+  const topGenres = Object.entries(genreMap).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([g]) => g)
 
-  // Top vibe tags from loved/essential items
   const vibeMap: Record<string, number> = {}
-  loved.forEach((item) => {
-    (item.vibe_tags || []).forEach((t) => {
-      vibeMap[t] = (vibeMap[t] || 0) + 1
-    })
-  })
-  const topVibes = Object.entries(vibeMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
-    .map(([t]) => t)
+  loved.forEach((item) => { (item.vibe_tags || []).forEach((t) => { vibeMap[t] = (vibeMap[t] || 0) + 1 }) })
+  const topVibes = Object.entries(vibeMap).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([t]) => t)
 
-  // Favourite creators (2+ rated items)
   const creatorMap: Record<string, number> = {}
-  rated.forEach((item) => {
-    if (item.creator) creatorMap[item.creator] = (creatorMap[item.creator] || 0) + 1
-  })
-  const topCreators = Object.entries(creatorMap)
-    .filter(([, count]) => count >= 2)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+  rated.forEach((item) => { if (item.creator) creatorMap[item.creator] = (creatorMap[item.creator] || 0) + 1 })
+  const topCreators = Object.entries(creatorMap).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]).slice(0, 6)
+
+  useEffect(() => {
+    if (rated.length < 3) return
+    setSummaryLoading(true)
+    fetch('/api/taste-summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        total: items.length,
+        byType: Object.fromEntries(byType.map(({ type, count }) => [type, count])),
+        topGenres,
+        topVibes,
+        byFeeling: Object.fromEntries(byFeeling.map(({ feeling, count }) => [feeling, count])),
+        topCreators,
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => setTasteSummary(d.summary))
+      .finally(() => setSummaryLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center px-5">
         <p className="text-4xl mb-4">🏰</p>
         <p style={{ color: 'var(--text2)' }}>Your palace is empty</p>
-        <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>Add something via Telegram to see your taste profile</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>Add something via Telegram to see your profile</p>
       </div>
     )
   }
 
   return (
-    <div className="px-5 pt-4 space-y-7 pb-10">
+    <div className="px-4 pt-5 space-y-7 pb-4">
 
-      {/* Summary row */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="rounded-xl px-4 py-3 flex-1 min-w-0 text-center" style={{ background: 'var(--surface)' }}>
-          <p className="text-2xl font-bold" style={{ color: 'var(--text-on-dark)' }}>{items.length}</p>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text2-dark)' }}>Total</p>
-        </div>
+      {/* AI taste summary */}
+      <div className="rounded-xl p-4" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
+        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Your taste</p>
+        {summaryLoading ? (
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0" style={{ borderColor: 'var(--border-dark)', borderTopColor: 'var(--accent)' }} />
+            <p className="text-sm" style={{ color: 'var(--text2)' }}>Thinking...</p>
+          </div>
+        ) : tasteSummary ? (
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text)', fontFamily: "'DM Serif Display', serif", fontSize: '1rem' }}>
+            {tasteSummary}
+          </p>
+        ) : (
+          <p className="text-sm" style={{ color: 'var(--text2)' }}>
+            Rate at least 3 items via Telegram to unlock your taste profile.
+          </p>
+        )}
+      </div>
+
+      {/* Counts */}
+      <div className="grid grid-cols-4 gap-2">
         {byType.map(({ type, count }) => (
-          <div key={type} className="rounded-xl px-4 py-3 flex-1 min-w-0 text-center" style={{ background: 'var(--surface)' }}>
-            <p className="text-2xl font-bold" style={{ color: 'var(--text-on-dark)' }}>{count}</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text2-dark)' }}>{TYPE_ICON[type]}</p>
+          <div key={type} className="rounded-xl py-3 text-center" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
+            <p className="text-lg">{TYPE_ICON[type]}</p>
+            <p className="text-lg font-semibold mt-0.5" style={{ color: 'var(--text)' }}>{count}</p>
           </div>
         ))}
       </div>
@@ -363,17 +352,14 @@ function ProfilePage({ items }: { items: Item[] }) {
           <div className="space-y-2.5">
             {byFeeling.map(({ feeling, count }) => (
               <div key={feeling} className="flex items-center gap-3">
-                <span className="text-base w-6 flex-shrink-0">{FEELING_EMOJI[feeling]}</span>
-                <div className="flex-1 rounded-full overflow-hidden h-2" style={{ background: 'var(--surface)' }}>
+                <span className="text-base w-5 flex-shrink-0">{FEELING_EMOJI[feeling]}</span>
+                <div className="flex-1 rounded-full overflow-hidden h-1.5" style={{ background: 'var(--border)' }}>
                   <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${(count / maxFeelingCount) * 100}%`,
-                      background: 'var(--accent)',
-                    }}
+                    className="h-full rounded-full"
+                    style={{ width: `${(count / maxFeelingCount) * 100}%`, background: 'var(--accent)' }}
                   />
                 </div>
-                <span className="text-xs w-4 text-right flex-shrink-0" style={{ color: 'var(--text2-dark)' }}>{count}</span>
+                <span className="text-xs w-4 text-right flex-shrink-0" style={{ color: 'var(--text2)' }}>{count}</span>
               </div>
             ))}
           </div>
@@ -383,17 +369,12 @@ function ProfilePage({ items }: { items: Item[] }) {
       {/* Top genres */}
       {topGenres.length > 0 && (
         <div>
-          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>
-            Favourite genres
-          </p>
+          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Favourite genres</p>
           <div className="flex flex-wrap gap-2">
             {topGenres.map((g) => (
-              <span key={g} className="text-xs px-2.5 py-1.5 rounded-lg capitalize" style={{ background: 'var(--surface)', color: 'var(--chip-text)' }}>
-                {g}
-              </span>
+              <span key={g} className="text-xs px-2.5 py-1.5 rounded-lg capitalize" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)', color: 'var(--chip-text)' }}>{g}</span>
             ))}
           </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--text2-dark)' }}>From 🔥 and ❤️ items only</p>
         </div>
       )}
 
@@ -403,9 +384,7 @@ function ProfilePage({ items }: { items: Item[] }) {
           <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Your vibes</p>
           <div className="flex flex-wrap gap-2">
             {topVibes.map((t) => (
-              <span key={t} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--surface)', color: 'var(--chip-text)' }}>
-                {t}
-              </span>
+              <span key={t} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)', color: 'var(--chip-text)' }}>{t}</span>
             ))}
           </div>
         </div>
@@ -415,21 +394,15 @@ function ProfilePage({ items }: { items: Item[] }) {
       {topCreators.length > 0 && (
         <div>
           <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Creators you keep coming back to</p>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {topCreators.map(([creator, count]) => (
-              <div key={creator} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: 'var(--surface)' }}>
-                <span className="text-sm" style={{ color: 'var(--text-on-dark)' }}>{creator}</span>
-                <span className="text-xs" style={{ color: 'var(--accent)' }}>×{count}</span>
+              <div key={creator} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
+                <span className="text-sm" style={{ color: 'var(--text)' }}>{creator}</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>×{count}</span>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {rated.length === 0 && (
-        <p className="text-sm text-center py-4" style={{ color: 'var(--text2)' }}>
-          Rate some items via Telegram to see your taste profile
-        </p>
       )}
     </div>
   )
@@ -446,34 +419,18 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Item | null>(null)
 
-  // Fetch library/want items
   useEffect(() => {
     if (tab === 'profile') return
     async function load() {
       setLoading(true)
-
       let statuses: string[]
-      if (tab === 'want') {
-        statuses = ['want']
-      } else if (statusFilters.size > 0) {
-        statuses = [...statusFilters]
-      } else {
-        statuses = ['done', 'in_progress', 'abandoned']
-      }
+      if (tab === 'want') statuses = ['want']
+      else if (statusFilters.size > 0) statuses = [...statusFilters]
+      else statuses = ['done', 'in_progress', 'abandoned']
 
-      let query = supabase
-        .from('items')
-        .select('*')
-        .in('status', statuses)
-        .order('added_at', { ascending: false })
-
-      if (typeFilters.size > 0) {
-        query = query.in('type', [...typeFilters])
-      }
-
-      if (tab === 'library' && feelingFilters.size > 0) {
-        query = query.in('feeling', [...feelingFilters])
-      }
+      let query = supabase.from('items').select('*').in('status', statuses).order('added_at', { ascending: false })
+      if (typeFilters.size > 0) query = query.in('type', [...typeFilters])
+      if (tab === 'library' && feelingFilters.size > 0) query = query.in('feeling', [...feelingFilters])
 
       const { data } = await query
       setItems(data || [])
@@ -482,16 +439,11 @@ export default function Home() {
     load()
   }, [tab, typeFilters, statusFilters, feelingFilters])
 
-  // Fetch all items for profile tab
   useEffect(() => {
     if (tab !== 'profile') return
     async function loadAll() {
       setLoading(true)
-      const { data } = await supabase
-        .from('items')
-        .select('*')
-        .in('status', ['done', 'in_progress', 'abandoned'])
-        .order('added_at', { ascending: false })
+      const { data } = await supabase.from('items').select('*').in('status', ['done', 'in_progress', 'abandoned']).order('added_at', { ascending: false })
       setAllItems(data || [])
       setLoading(false)
     }
@@ -509,37 +461,25 @@ export default function Home() {
     setTypeFilters(new Set())
   }
 
+  const NAV = [
+    { key: 'library', label: 'Library', icon: '📚' },
+    { key: 'want',    label: 'Want',    icon: '🔖' },
+    { key: 'profile', label: 'Profile', icon: '✦'  },
+  ] as const
+
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--bg)', paddingBottom: '72px' }}>
+
       {/* Header */}
-      <header className="px-5 pt-12 pb-4">
-        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: '2rem', color: 'var(--text)', lineHeight: 1.1 }}>
+      <header className="px-5 pt-12 pb-3">
+        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: '1.75rem', color: 'var(--text)', lineHeight: 1.1 }}>
           Content Palace
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>Your personal library</p>
       </header>
-
-      {/* Tabs */}
-      <div className="px-5 flex gap-0" style={{ borderBottom: '1px solid var(--border)' }}>
-        {(['library', 'want', 'profile'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => switchTab(t)}
-            className="px-4 py-2.5 text-sm font-medium relative capitalize"
-            style={{ color: tab === t ? 'var(--text)' : 'var(--text2)' }}
-          >
-            {t === 'library' ? 'Library' : t === 'want' ? 'Want List' : 'Profile'}
-            {tab === t && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ background: 'var(--accent)' }} />
-            )}
-          </button>
-        ))}
-      </div>
 
       {/* Filters (library + want only) */}
       {tab !== 'profile' && (
-        <div className="pt-2 pb-1" style={{ borderBottom: '1px solid var(--border)' }}>
-          {/* Type */}
+        <div className="pt-1 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
           <FilterRow label="Type">
             <Pill active={typeFilters.size === 0} onClick={() => setTypeFilters(new Set())}>All</Pill>
             {(['book', 'film', 'show', 'other'] as const).map((t) => (
@@ -549,7 +489,6 @@ export default function Home() {
             ))}
           </FilterRow>
 
-          {/* Status (library only) */}
           {tab === 'library' && (
             <FilterRow label="Status">
               <Pill active={statusFilters.size === 0} onClick={() => setStatusFilters(new Set())}>All</Pill>
@@ -561,7 +500,6 @@ export default function Home() {
             </FilterRow>
           )}
 
-          {/* Rating (library only) */}
           {tab === 'library' && (
             <FilterRow label="Rating">
               <Pill active={feelingFilters.size === 0} onClick={() => setFeelingFilters(new Set())}>All</Pill>
@@ -569,10 +507,10 @@ export default function Home() {
                 <button
                   key={f}
                   onClick={() => setFeelingFilters(toggleSet(feelingFilters, f))}
-                  className="flex-shrink-0 text-base px-2 py-0.5 rounded-full transition-colors"
+                  className="flex-shrink-0 text-base px-2 py-0.5 rounded-full"
                   style={{
-                    background: feelingFilters.has(f) ? 'var(--accent-dim)' : 'transparent',
-                    border: `1px solid ${feelingFilters.has(f) ? 'var(--accent)' : 'var(--border)'}`,
+                    background: feelingFilters.has(f) ? 'var(--text)' : 'transparent',
+                    border: `1px solid ${feelingFilters.has(f) ? 'var(--text)' : 'var(--border-dark)'}`,
                   }}
                 >
                   {FEELING_EMOJI[f]}
@@ -583,8 +521,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Profile tab */}
-      {tab === 'profile' && (
+      {/* Content */}
+      {tab === 'profile' ? (
         loading ? (
           <div className="flex justify-center py-24">
             <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
@@ -592,10 +530,7 @@ export default function Home() {
         ) : (
           <ProfilePage items={allItems} />
         )
-      )}
-
-      {/* Library / Want content */}
-      {tab !== 'profile' && (
+      ) : (
         <div className="px-4 pt-3">
           {loading ? (
             <div className="flex justify-center py-24">
@@ -603,8 +538,8 @@ export default function Home() {
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <p className="text-4xl mb-4">📚</p>
-              <p style={{ color: 'var(--text2)' }}>{tab === 'want' ? 'Your want list is empty' : 'Nothing here yet'}</p>
+              <p className="text-4xl mb-4">{tab === 'want' ? '🔖' : '📚'}</p>
+              <p style={{ color: 'var(--text2)' }}>{tab === 'want' ? 'Nothing saved yet' : 'Nothing here yet'}</p>
               <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>Add something via Telegram</p>
             </div>
           ) : (
@@ -612,38 +547,51 @@ export default function Home() {
               {showSections && inProgress.length > 0 && (
                 <section>
                   <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Currently</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {inProgress.map((item) => (
-                      <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
-                    ))}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {inProgress.map((item) => <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />)}
                   </div>
                 </section>
               )}
-
               {showSections && finished.length > 0 && (
                 <section>
-                  {inProgress.length > 0 && (
-                    <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Finished</p>
-                  )}
-                  <div className="grid grid-cols-3 gap-2">
-                    {finished.map((item) => (
-                      <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
-                    ))}
+                  {inProgress.length > 0 && <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Finished</p>}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {finished.map((item) => <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />)}
                   </div>
                 </section>
               )}
-
               {!showSections && (
-                <div className="grid grid-cols-3 gap-2">
-                  {items.map((item) => (
-                    <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
-                  ))}
+                <div className="grid grid-cols-3 gap-2.5">
+                  {items.map((item) => <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />)}
                 </div>
               )}
             </div>
           )}
         </div>
       )}
+
+      {/* Bottom navigation */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-30 flex"
+        style={{
+          background: 'rgba(253,252,250,0.92)',
+          backdropFilter: 'blur(12px)',
+          borderTop: '1px solid var(--border)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        {NAV.map(({ key, label, icon }) => (
+          <button
+            key={key}
+            onClick={() => switchTab(key)}
+            className="flex-1 flex flex-col items-center py-3 gap-0.5"
+            style={{ color: tab === key ? 'var(--accent)' : 'var(--text2)' }}
+          >
+            <span className="text-lg leading-none">{icon}</span>
+            <span className="text-xs font-medium">{label}</span>
+          </button>
+        ))}
+      </nav>
 
       {selected && <ItemDrawer item={selected} onClose={() => setSelected(null)} />}
     </div>
