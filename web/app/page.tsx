@@ -3,13 +3,26 @@
 import { useEffect, useState } from 'react'
 import { supabase, Item } from '@/lib/supabase'
 
+const FEELING_EMOJI: Record<string, string> = {
+  essential: '🔥',
+  loved: '❤️',
+  average: '😐',
+  not_for_me: '🙈',
+  regret: '💀',
+}
+
 const FEELING_LABEL: Record<string, string> = {
-  essential: 'Essential',
-  loved: 'Loved it',
-  good: 'Really good',
-  fine: 'Fine',
-  not_for_me: 'Not for me',
-  regret: 'Regret it',
+  essential: '🔥 Essential',
+  loved: '❤️ Loved it',
+  average: '😐 Average',
+  not_for_me: '🙈 Not for me',
+  regret: '💀 Regret it',
+}
+
+const REVISIT_LABEL: Record<string, string> = {
+  yes: '↩ Would revisit',
+  maybe: '↩ Maybe revisit',
+  no: '— Probably not',
 }
 
 const TYPE_ICON: Record<string, string> = {
@@ -21,67 +34,55 @@ const TYPE_ICON: Record<string, string> = {
 
 const TYPES = ['all', 'book', 'film', 'show', 'other'] as const
 
+const STATUS_FILTERS = ['all', 'in_progress', 'done', 'abandoned'] as const
+const STATUS_LABEL: Record<string, string> = {
+  all: 'All',
+  in_progress: 'Current',
+  done: 'Finished',
+  abandoned: 'Dropped',
+}
+
+const FEELING_FILTERS = ['essential', 'loved', 'average', 'not_for_me', 'regret'] as const
+
 function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
+  const emoji = item.feeling ? FEELING_EMOJI[item.feeling] : null
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-xl overflow-hidden transition-transform active:scale-[0.97]"
+      className="w-full text-left rounded-lg overflow-hidden transition-transform active:scale-[0.97]"
       style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}
     >
-      {/* Cover */}
-      <div className="w-full overflow-hidden" style={{ aspectRatio: '2/3' }}>
+      <div className="w-full overflow-hidden relative" style={{ aspectRatio: '2/3' }}>
         {item.cover_url ? (
-          <img
-            src={item.cover_url}
-            alt={item.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={item.cover_url} alt={item.title} className="w-full h-full object-cover" />
         ) : (
           <div
-            className="w-full h-full flex items-center justify-center text-3xl"
+            className="w-full h-full flex items-center justify-center text-xl"
             style={{ background: 'var(--surface2)' }}
           >
             {TYPE_ICON[item.type] || '◆'}
           </div>
         )}
+        {emoji && (
+          <span
+            className="absolute bottom-1 right-1 text-sm leading-none"
+            style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))' }}
+          >
+            {emoji}
+          </span>
+        )}
       </div>
-
-      {/* Info */}
-      <div className="p-3">
-        <p className="text-xs mb-1" style={{ color: 'var(--text2-dark)' }}>
-          {TYPE_ICON[item.type]}
-        </p>
+      <div className="p-2">
         <h3
-          className="font-semibold text-sm leading-snug mb-1 line-clamp-2"
+          className="font-medium text-xs leading-snug line-clamp-2"
           style={{ color: 'var(--text-on-dark)' }}
         >
           {item.title}
         </h3>
-        {item.creator && (
-          <p className="text-xs mb-2 truncate" style={{ color: 'var(--text2-dark)' }}>
-            {item.creator}{item.year ? ` · ${item.year}` : ''}
+        {item.year && (
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text2-dark)' }}>
+            {item.year}
           </p>
-        )}
-        {item.feeling && (
-          <span
-            className="inline-block text-xs px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(201,146,42,0.15)', color: 'var(--accent)' }}
-          >
-            {FEELING_LABEL[item.feeling]}
-          </span>
-        )}
-        {item.vibe_tags && item.vibe_tags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {item.vibe_tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-1.5 py-0.5 rounded"
-                style={{ background: 'var(--border-dark)', color: 'var(--text2-dark)' }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
         )}
       </div>
     </button>
@@ -91,9 +92,7 @@ function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
 function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-    }
+    return () => { document.body.style.overflow = '' }
   }, [])
 
   const highlights: string[] = (() => {
@@ -107,26 +106,18 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-40"
         style={{ background: 'rgba(0,0,0,0.65)' }}
         onClick={onClose}
       />
-
-      {/* Sheet */}
       <div
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl overflow-y-auto"
         style={{ background: 'var(--surface)', maxHeight: '88vh' }}
       >
         <div className="p-5">
-          {/* Drag handle */}
-          <div
-            className="w-10 h-1 rounded-full mx-auto mb-5"
-            style={{ background: 'var(--border-dark)' }}
-          />
+          <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--border-dark)' }} />
 
-          {/* Header row */}
           <div className="flex gap-4 mb-5">
             {item.cover_url && (
               <img
@@ -142,23 +133,20 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
               </p>
               <h2
                 className="font-bold text-lg leading-tight mb-1"
-                style={{
-                  color: 'var(--text-on-dark)',
-                  fontFamily: "'DM Serif Display', serif",
-                }}
+                style={{ color: 'var(--text-on-dark)', fontFamily: "'DM Serif Display', serif" }}
               >
                 {item.title}
               </h2>
               {item.creator && (
-                <p className="text-sm" style={{ color: 'var(--text2-dark)' }}>
+                <p className="text-sm mb-2" style={{ color: 'var(--chip-text)' }}>
                   {item.creator}
                 </p>
               )}
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2">
                 {item.feeling && (
                   <span
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(201,146,42,0.15)', color: 'var(--accent)' }}
+                    className="text-xs px-2 py-0.5 rounded-full font-medium"
+                    style={{ background: 'rgba(201,146,42,0.25)', color: 'var(--accent)' }}
                   >
                     {FEELING_LABEL[item.feeling]}
                   </span>
@@ -166,39 +154,27 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
                 {item.would_revisit && (
                   <span
                     className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ background: 'var(--surface2)', color: 'var(--text2-dark)' }}
+                    style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}
                   >
-                    {item.would_revisit === 'yes'
-                      ? '↩ Would revisit'
-                      : item.would_revisit === 'maybe'
-                      ? '↩ Maybe revisit'
-                      : '— Probably not'}
+                    {REVISIT_LABEL[item.would_revisit]}
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Quote */}
           {item.highlight_quote && (
             <blockquote
               className="mb-5 pl-3 italic text-sm leading-relaxed"
-              style={{
-                borderLeft: '2px solid var(--accent)',
-                color: 'var(--text-on-dark)',
-              }}
+              style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text-on-dark)' }}
             >
               &ldquo;{item.highlight_quote}&rdquo;
             </blockquote>
           )}
 
-          {/* Highlights */}
           {highlights.length > 0 && (
             <div className="mb-5">
-              <p
-                className="text-xs uppercase tracking-widest mb-3"
-                style={{ color: 'var(--text2-dark)' }}
-              >
+              <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2-dark)' }}>
                 Thoughts
               </p>
               <ul className="space-y-2">
@@ -212,13 +188,9 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
             </div>
           )}
 
-          {/* Plain summary fallback */}
           {!highlights.length && item.summary && (
             <div className="mb-5">
-              <p
-                className="text-xs uppercase tracking-widest mb-2"
-                style={{ color: 'var(--text2-dark)' }}
-              >
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>
                 Thoughts
               </p>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--text-on-dark)' }}>
@@ -227,13 +199,9 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
             </div>
           )}
 
-          {/* Vibe tags */}
           {item.vibe_tags && item.vibe_tags.length > 0 && (
             <div className="mb-5">
-              <p
-                className="text-xs uppercase tracking-widest mb-2"
-                style={{ color: 'var(--text2-dark)' }}
-              >
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>
                 Vibes
               </p>
               <div className="flex flex-wrap gap-2">
@@ -241,7 +209,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
                   <span
                     key={tag}
                     className="text-xs px-2 py-1 rounded-lg"
-                    style={{ background: 'var(--surface2)', color: 'var(--text2-dark)' }}
+                    style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}
                   >
                     {tag}
                   </span>
@@ -250,13 +218,9 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
             </div>
           )}
 
-          {/* Genres */}
           {item.genres && item.genres.length > 0 && (
             <div className="mb-5">
-              <p
-                className="text-xs uppercase tracking-widest mb-2"
-                style={{ color: 'var(--text2-dark)' }}
-              >
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>
                 Genres
               </p>
               <div className="flex flex-wrap gap-2">
@@ -264,7 +228,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
                   <span
                     key={g}
                     className="text-xs px-2 py-1 rounded-lg"
-                    style={{ background: 'var(--surface2)', color: 'var(--text2-dark)' }}
+                    style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}
                   >
                     {g}
                   </span>
@@ -273,16 +237,12 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
             </div>
           )}
 
-          {/* Description */}
           {item.description && (
             <div className="mb-5">
-              <p
-                className="text-xs uppercase tracking-widest mb-2"
-                style={{ color: 'var(--text2-dark)' }}
-              >
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2-dark)' }}>
                 About
               </p>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text2-dark)' }}>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--chip-text)' }}>
                 {item.description}
               </p>
             </div>
@@ -298,6 +258,8 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 export default function Home() {
   const [tab, setTab] = useState<'library' | 'want'>('library')
   const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [feelingFilter, setFeelingFilter] = useState<string>('all')
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Item | null>(null)
@@ -305,8 +267,15 @@ export default function Home() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const statuses =
-        tab === 'want' ? ['want'] : ['done', 'in_progress', 'abandoned']
+
+      let statuses: string[]
+      if (tab === 'want') {
+        statuses = ['want']
+      } else if (statusFilter !== 'all') {
+        statuses = [statusFilter]
+      } else {
+        statuses = ['done', 'in_progress', 'abandoned']
+      }
 
       let query = supabase
         .from('items')
@@ -318,15 +287,44 @@ export default function Home() {
         query = query.eq('type', typeFilter)
       }
 
+      if (tab === 'library' && feelingFilter !== 'all') {
+        query = query.eq('feeling', feelingFilter)
+      }
+
       const { data } = await query
       setItems(data || [])
       setLoading(false)
     }
     load()
-  }, [tab, typeFilter])
+  }, [tab, typeFilter, statusFilter, feelingFilter])
 
+  const showSections = tab === 'library' && statusFilter === 'all'
   const inProgress = items.filter((i) => i.status === 'in_progress')
   const finished = items.filter((i) => i.status === 'done' || i.status === 'abandoned')
+
+  function FilterPill({
+    active,
+    onClick,
+    children,
+  }: {
+    active: boolean
+    onClick: () => void
+    children: React.ReactNode
+  }) {
+    return (
+      <button
+        onClick={onClick}
+        className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+        style={{
+          background: active ? 'var(--accent-dim)' : 'transparent',
+          color: active ? 'var(--accent)' : 'var(--text2)',
+          border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+        }}
+      >
+        {children}
+      </button>
+    )
+  }
 
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--bg)' }}>
@@ -348,14 +346,11 @@ export default function Home() {
       </header>
 
       {/* Tabs */}
-      <div
-        className="px-5 flex gap-0"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
+      <div className="px-5 flex gap-0" style={{ borderBottom: '1px solid var(--border)' }}>
         {(['library', 'want'] as const).map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); setStatusFilter('all'); setFeelingFilter('all') }}
             className="px-4 py-2.5 text-sm font-medium relative"
             style={{ color: tab === t ? 'var(--text)' : 'var(--text2)' }}
           >
@@ -371,33 +366,57 @@ export default function Home() {
       </div>
 
       {/* Type filters */}
-      <div className="px-5 pt-4 pb-2 flex gap-2 overflow-x-auto">
-        {TYPES.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTypeFilter(t)}
-            className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors capitalize"
-            style={{
-              background: typeFilter === t ? 'var(--surface)' : 'transparent',
-              color: typeFilter === t ? 'var(--text-on-dark)' : 'var(--text2)',
-              border: `1px solid ${typeFilter === t ? 'var(--surface)' : 'var(--border)'}`,
-            }}
-          >
-            {t === 'all' ? 'All' : `${TYPE_ICON[t]} ${t}s`}
-          </button>
+      <div className="px-5 pt-3 pb-2 flex gap-2 overflow-x-auto">
+        <FilterPill active={typeFilter === 'all'} onClick={() => setTypeFilter('all')}>
+          All
+        </FilterPill>
+        {TYPES.filter((t) => t !== 'all').map((t) => (
+          <FilterPill key={t} active={typeFilter === t} onClick={() => setTypeFilter(t)}>
+            {TYPE_ICON[t]} {t}s
+          </FilterPill>
         ))}
       </div>
 
+      {/* Status filters (library only) */}
+      {tab === 'library' && (
+        <div className="px-5 pb-2 flex gap-2 overflow-x-auto">
+          {STATUS_FILTERS.map((s) => (
+            <FilterPill key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
+              {STATUS_LABEL[s]}
+            </FilterPill>
+          ))}
+        </div>
+      )}
+
+      {/* Rating filters (library only) */}
+      {tab === 'library' && (
+        <div className="px-5 pb-3 flex gap-2 overflow-x-auto">
+          <FilterPill active={feelingFilter === 'all'} onClick={() => setFeelingFilter('all')}>
+            All
+          </FilterPill>
+          {FEELING_FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFeelingFilter(f)}
+              className="flex-shrink-0 text-base px-2.5 py-1 rounded-full transition-colors"
+              style={{
+                background: feelingFilter === f ? 'var(--accent-dim)' : 'transparent',
+                border: `1px solid ${feelingFilter === f ? 'var(--accent)' : 'var(--border)'}`,
+              }}
+            >
+              {FEELING_EMOJI[f]}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Content */}
-      <div className="px-5 pt-4">
+      <div className="px-4 pt-2">
         {loading ? (
           <div className="flex justify-center py-24">
             <div
               className="w-6 h-6 rounded-full border-2 animate-spin"
-              style={{
-                borderColor: 'var(--border)',
-                borderTopColor: 'var(--accent)',
-              }}
+              style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
             />
           </div>
         ) : items.length === 0 ? (
@@ -411,60 +430,39 @@ export default function Home() {
             </p>
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Currently reading/watching */}
-            {tab === 'library' && inProgress.length > 0 && (
+          <div className="space-y-6">
+            {showSections && inProgress.length > 0 && (
               <section>
-                <p
-                  className="text-xs uppercase tracking-widest mb-3"
-                  style={{ color: 'var(--text2)' }}
-                >
+                <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>
                   Currently
                 </p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {inProgress.map((item) => (
-                    <ItemCard
-                      key={item.id}
-                      item={item}
-                      onClick={() => setSelected(item)}
-                    />
+                    <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Finished */}
-            {tab === 'library' && finished.length > 0 && (
+            {showSections && finished.length > 0 && (
               <section>
                 {inProgress.length > 0 && (
-                  <p
-                    className="text-xs uppercase tracking-widest mb-3"
-                    style={{ color: 'var(--text2)' }}
-                  >
+                  <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>
                     Finished
                   </p>
                 )}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {finished.map((item) => (
-                    <ItemCard
-                      key={item.id}
-                      item={item}
-                      onClick={() => setSelected(item)}
-                    />
+                    <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Want list */}
-            {tab === 'want' && (
-              <div className="grid grid-cols-2 gap-3">
+            {!showSections && (
+              <div className="grid grid-cols-3 gap-2">
                 {items.map((item) => (
-                  <ItemCard
-                    key={item.id}
-                    item={item}
-                    onClick={() => setSelected(item)}
-                  />
+                  <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
                 ))}
               </div>
             )}
@@ -472,9 +470,7 @@ export default function Home() {
         )}
       </div>
 
-      {selected && (
-        <ItemDrawer item={selected} onClose={() => setSelected(null)} />
-      )}
+      {selected && <ItemDrawer item={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }

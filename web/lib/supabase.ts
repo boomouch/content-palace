@@ -15,7 +15,7 @@ export type Item = {
   description: string | null
   genres: string[] | null
   status: 'want' | 'in_progress' | 'done' | 'abandoned'
-  feeling: 'essential' | 'loved' | 'good' | 'fine' | 'not_for_me' | 'regret' | null
+  feeling: 'essential' | 'loved' | 'average' | 'not_for_me' | 'regret' | null
   vibe_tags: string[] | null
   would_revisit: 'yes' | 'maybe' | 'no' | null
   highlight_quote: string | null

@@ -14,6 +14,7 @@
   --text2-dark:   #6a5a4a;
   --accent:       #c9922a;
   --accent-dim:   rgba(201,146,42,0.12);
+  --chip-text:    #b8a690;
 }
 
 * { box-sizing: border-box; }
