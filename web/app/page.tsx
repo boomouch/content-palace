@@ -106,7 +106,7 @@ function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
         )}
       </div>
       <div className="p-2">
-        <h3 className="font-medium text-xs leading-snug line-clamp-2" style={{ color: 'var(--text)' }}>
+        <h3 className="font-medium text-xs leading-snug line-clamp-2" style={{ color: 'var(--text-on-dark)' }}>
           {emoji && <span className="mr-0.5">{emoji}</span>}
           {item.title}
         </h3>
@@ -159,7 +159,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
               </p>
               <h2
                 className="font-bold text-xl leading-tight mb-1"
-                style={{ color: 'var(--text)', fontFamily: "'DM Serif Display', serif" }}
+                style={{ color: 'var(--text-on-dark)', fontFamily: "'DM Serif Display', serif" }}
               >
                 {item.title}
               </h2>
@@ -190,7 +190,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
           {item.highlight_quote && (
             <blockquote
               className="mb-5 pl-4 italic text-sm leading-relaxed"
-              style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text)' }}
+              style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text-on-dark)' }}
             >
               &ldquo;{item.highlight_quote}&rdquo;
             </blockquote>
@@ -201,7 +201,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
               <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Thoughts</p>
               <ul className="space-y-2">
                 {highlights.map((h, i) => (
-                  <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--text)' }}>
+                  <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--text-on-dark)' }}>
                     <span style={{ color: 'var(--accent)', flexShrink: 0 }}>·</span>
                     {h}
                   </li>
@@ -213,7 +213,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
           {!highlights.length && item.summary && (
             <div className="mb-5">
               <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>Thoughts</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>{item.summary}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-on-dark)' }}>{item.summary}</p>
             </div>
           )}
 
@@ -325,7 +325,7 @@ function ProfilePage({ items }: { items: Item[] }) {
             <p className="text-sm" style={{ color: 'var(--text2)' }}>Thinking...</p>
           </div>
         ) : tasteSummary ? (
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--text)', fontFamily: "'DM Serif Display', serif", fontSize: '1rem' }}>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-on-dark)', fontFamily: "'DM Serif Display', serif", fontSize: '1rem' }}>
             {tasteSummary}
           </p>
         ) : (
@@ -340,7 +340,7 @@ function ProfilePage({ items }: { items: Item[] }) {
         {byType.map(({ type, count }) => (
           <div key={type} className="rounded-xl py-3 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
             <p className="text-lg">{TYPE_ICON[type]}</p>
-            <p className="text-lg font-semibold mt-0.5" style={{ color: 'var(--text)' }}>{count}</p>
+            <p className="text-lg font-semibold mt-0.5" style={{ color: 'var(--text-on-dark)' }}>{count}</p>
           </div>
         ))}
       </div>
@@ -397,7 +397,7 @@ function ProfilePage({ items }: { items: Item[] }) {
           <div className="space-y-1.5">
             {topCreators.map(([creator, count]) => (
               <div key={creator} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
-                <span className="text-sm" style={{ color: 'var(--text)' }}>{creator}</span>
+                <span className="text-sm" style={{ color: 'var(--text-on-dark)' }}>{creator}</span>
                 <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>×{count}</span>
               </div>
             ))}

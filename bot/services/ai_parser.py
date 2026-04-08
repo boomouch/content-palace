@@ -70,20 +70,25 @@ Rules:
 - 1 sentence, casual and direct
 - Reply in: {lang}"""
 
-SUMMARY_PROMPT = """Extract the key highlights from what this person said about "{title}".
+SUMMARY_PROMPT = """Distill what this person said about "{title}" into sharp, memorable observations.
 
 Their messages:
 {messages}
 
-Return a JSON array of 3-6 short highlight strings. Rules:
-- Each highlight is one punchy thought, in their voice (first person implied)
-- Keep specific details they mentioned (numbers, names, comparisons)
-- Don't paraphrase into generic statements — keep the flavour of what they actually said
-- No bullet symbols, no numbering — just the text
-- Max 12 words each
+Return a JSON array of 3-5 bullet strings. Rules:
+- Rework their words — don't just quote or paraphrase them
+- Each bullet should be a crisp insight or strong opinion, not a description
+- Strip filler — cut "I think", "it was", "really", "kind of"
+- If they said something vague, make it specific and concrete
+- If they contradicted themselves, pick the stronger opinion
+- Punchy, direct, opinionated — like a good review pulled apart into its best lines
+- Max 10 words each, no bullet symbols, no numbering
 
-Example output:
-["Rewatched 10 times and it never gets old", "Female characters written as real women, not male roles in disguise", "Surprisingly progressive for 2004", "Perfect blend of medicine nerd content and great storytelling"]
+Bad: "I thought the characters were quite interesting and well developed"
+Good: "Characters feel like real people, not plot devices"
+
+Bad: "The ending was surprising and I didn't expect it"
+Good: "Ending reframes everything — didn't see it coming"
 
 JSON array only, no other text."""
 
