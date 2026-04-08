@@ -42,6 +42,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     session = database.get_session(telegram_id, telegram_handle)
     state = session.get("state", "idle")
 
+    # ── Commands always take priority over session state ──
+    delete_match = _DELETE_RE.match(text)
+    if delete_match:
+        await _handle_delete(update, delete_match.group(1).strip(), telegram_id)
+        return
+
+    rate_match = _RATE_RE.match(text)
+    if rate_match:
+        await _handle_rate(update, rate_match.group(1).strip(), rate_match.group(2).strip(), telegram_id)
+        return
+
+    note_match = _NOTE_RE.match(text)
+    if note_match:
+        await _handle_add_note(update, context, note_match.group(1).strip(), note_match.group(2).strip(), telegram_id)
+        return
+
     # ── State: waiting for feeling rating ──
     if state == "awaiting_feeling":
         await update.message.reply_text("Use the buttons above to rate your feeling ↑")
@@ -77,24 +93,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if text.lower() not in ("skip", ".", "-", "no", "нет", "пропустить"):
             database.update_item(item_id, {"highlight_quote": text})
         await _finish_entry(update, context, telegram_id, item_id)
-        return
-
-    # ── Delete command ──
-    delete_match = _DELETE_RE.match(text)
-    if delete_match:
-        await _handle_delete(update, delete_match.group(1).strip(), telegram_id)
-        return
-
-    # ── Rate/update command ──
-    rate_match = _RATE_RE.match(text)
-    if rate_match:
-        await _handle_rate(update, rate_match.group(1).strip(), rate_match.group(2).strip(), telegram_id)
-        return
-
-    # ── Add note command ──
-    note_match = _NOTE_RE.match(text)
-    if note_match:
-        await _handle_add_note(update, context, note_match.group(1).strip(), note_match.group(2).strip(), telegram_id)
         return
 
     # ── Default: idle — parse new message ──
