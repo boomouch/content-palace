@@ -32,11 +32,21 @@ const TYPE_ICON: Record<string, string> = {
   other: '◆',
 }
 
+const SUBTYPE_LABEL: Record<string, string> = {
+  youtube: '▶ YouTube',
+  podcast: '🎙 Podcast',
+  newsletter: '✉ Newsletter',
+  article: '📄 Article',
+  blog: '✏ Blog',
+  documentary: '🎞 Documentary',
+  course: '📐 Course',
+}
+
 const TYPE_LABEL: Record<string, string> = {
   book: 'Books',
   film: 'Films',
   show: 'Shows',
-  other: 'Other',
+  other: 'Others',
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -54,29 +64,54 @@ function toggleSet(set: Set<string>, value: string): Set<string> {
   return next
 }
 
-// ── Filter row ──
-function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+// ── SVG Icons ──
+function IconGrid({ size = 20 }: { size?: number }) {
   return (
-    <div className="flex items-center gap-2 px-4 py-1.5">
-      <span className="text-xs w-12 flex-shrink-0" style={{ color: 'var(--text2)' }}>
-        {label}
-      </span>
-      <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        {children}
-      </div>
-    </div>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2.5" y="2.5" width="6" height="6" rx="1"/>
+      <rect x="11.5" y="2.5" width="6" height="6" rx="1"/>
+      <rect x="2.5" y="11.5" width="6" height="6" rx="1"/>
+      <rect x="11.5" y="11.5" width="6" height="6" rx="1"/>
+    </svg>
   )
 }
 
-function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function IconBookmark({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 2.5h10a1 1 0 011 1v13.5l-6-3.75-6 3.75V3.5a1 1 0 011-1z"/>
+    </svg>
+  )
+}
+
+function IconPerson({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="10" cy="7" r="3.5"/>
+      <path d="M3 18c0-3.866 3.134-7 7-7s7 3.134 7 7"/>
+    </svg>
+  )
+}
+
+function IconSearch({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="9" cy="9" r="5.5"/>
+      <path d="M14 14l3.5 3.5"/>
+    </svg>
+  )
+}
+
+// ── Chip ──
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap"
+      className="flex-shrink-0 flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap"
       style={{
-        background: active ? 'var(--surface)' : 'transparent',
-        color: active ? 'var(--text-on-dark)' : 'var(--text2)',
-        border: `1px solid ${active ? 'var(--surface)' : 'var(--border)'}`,
+        background: active ? 'var(--text)' : 'transparent',
+        color: active ? 'var(--bg)' : 'var(--text2)',
+        border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`,
       }}
     >
       {children}
@@ -84,37 +119,95 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
   )
 }
 
-// ── Item card ──
+// ── Featured card (currently reading/watching) ──
+function FeaturedCard({ item, onClick }: { item: Item; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left rounded-2xl overflow-hidden flex transition-transform active:scale-[0.98]"
+      style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}
+    >
+      <div style={{ width: '36%', flexShrink: 0 }}>
+        <div className="w-full h-full" style={{ minHeight: '180px' }}>
+          {item.cover_url ? (
+            <img src={item.cover_url} alt={item.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: 'var(--card-bg2)' }}>
+              {TYPE_ICON[item.type] || '◆'}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+        <div>
+          {item.year && (
+            <p className="text-xs mb-1.5 tabular-nums" style={{ color: 'var(--text2)' }}>{item.year}</p>
+          )}
+          <h3
+            className="font-bold leading-tight mb-1.5"
+            style={{ fontFamily: "'DM Serif Display', serif", fontSize: '1.25rem', color: 'var(--text)' }}
+          >
+            {item.title}
+          </h3>
+          {item.creator && (
+            <p className="text-sm mb-3" style={{ color: 'var(--text2)' }}>{item.creator}</p>
+          )}
+          <span
+            className="inline-flex items-center text-xs font-bold tracking-wider px-2.5 py-1 rounded-full"
+            style={{ background: 'var(--text)', color: 'var(--bg)' }}
+          >
+            CURRENT
+          </span>
+        </div>
+        {item.highlight_quote && (
+          <p className="text-xs italic mt-4 leading-relaxed line-clamp-3" style={{ color: 'var(--text2)' }}>
+            &ldquo;{item.highlight_quote}&rdquo;
+          </p>
+        )}
+      </div>
+    </button>
+  )
+}
+
+// ── Item card (grid) ──
 function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
   const emoji = item.feeling ? FEELING_EMOJI[item.feeling] : null
   return (
     <button
       onClick={onClick}
       className="w-full text-left rounded-xl overflow-hidden transition-transform active:scale-[0.97]"
-      style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}
+      style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}
     >
       <div className="w-full overflow-hidden" style={{ aspectRatio: '2/3' }}>
         {item.cover_url ? (
           <img src={item.cover_url} alt={item.title} className="w-full h-full object-cover" />
         ) : (
-          <div
-            className="w-full h-full flex items-center justify-center text-xl"
-            style={{ background: 'var(--surface2)' }}
-          >
+          <div className="w-full h-full flex items-center justify-center text-2xl" style={{ background: 'var(--card-bg2)' }}>
             {TYPE_ICON[item.type] || '◆'}
           </div>
         )}
       </div>
       <div className="p-2">
-        <h3 className="font-medium text-xs leading-snug line-clamp-2" style={{ color: 'var(--text-on-dark)' }}>
+        <h3 className="font-medium text-xs leading-snug line-clamp-2" style={{ color: 'var(--text)' }}>
           {emoji && <span className="mr-0.5">{emoji}</span>}
           {item.title}
         </h3>
-        {item.year && (
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>{item.year}</p>
+        {(item.subtype || item.year) && (
+          <p className="text-xs mt-0.5 tabular-nums" style={{ color: 'var(--text2)' }}>
+            {item.subtype ? (SUBTYPE_LABEL[item.subtype] ?? item.subtype) : item.year}
+          </p>
         )}
       </div>
     </button>
+  )
+}
+
+// ── Section header ──
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'var(--text)' }}>
+      {title}
+    </h2>
   )
 }
 
@@ -136,30 +229,31 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
+      <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.35)' }} onClick={onClose} />
       <div
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl overflow-y-auto"
-        style={{ background: 'var(--surface)', maxHeight: '88vh' }}
+        style={{ background: 'var(--card-bg)', maxHeight: '88vh' }}
       >
         <div className="p-5">
-          <div className="w-8 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--border-dark)' }} />
+          <div className="w-8 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--border)' }} />
 
           <div className="flex gap-4 mb-5">
             {item.cover_url && (
               <img
                 src={item.cover_url}
                 alt={item.title}
-                className="flex-shrink-0 w-20 rounded-lg object-cover"
+                className="flex-shrink-0 w-20 rounded-xl object-cover"
                 style={{ aspectRatio: '2/3' }}
               />
             )}
             <div className="flex-1 min-w-0">
               <p className="text-xs mb-1" style={{ color: 'var(--text2)' }}>
-                {TYPE_ICON[item.type]} {item.type}{item.year ? ` · ${item.year}` : ''}
+                {item.subtype ? SUBTYPE_LABEL[item.subtype] ?? item.subtype : `${TYPE_ICON[item.type]} ${item.type}`}
+                {item.year ? ` · ${item.year}` : ''}
               </p>
               <h2
                 className="font-bold text-xl leading-tight mb-1"
-                style={{ color: 'var(--text-on-dark)', fontFamily: "'DM Serif Display', serif" }}
+                style={{ color: 'var(--text)', fontFamily: "'DM Serif Display', serif" }}
               >
                 {item.title}
               </h2>
@@ -178,19 +272,33 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
                 {item.would_revisit && (
                   <span
                     className="text-xs px-2.5 py-1 rounded-full"
-                    style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}
+                    style={{ background: 'var(--card-bg2)', color: 'var(--chip-text)', border: '1px solid var(--border)' }}
                   >
                     {REVISIT_LABEL[item.would_revisit]}
                   </span>
                 )}
               </div>
+              {(item.started_at || item.finished_at) && (
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                  {item.started_at && (
+                    <span className="text-xs" style={{ color: 'var(--text2)' }}>
+                      Started {new Date(item.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                  {item.finished_at && (
+                    <span className="text-xs" style={{ color: 'var(--text2)' }}>
+                      {item.status === 'abandoned' ? 'Abandoned' : 'Finished'} {new Date(item.finished_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {item.highlight_quote && (
             <blockquote
               className="mb-5 pl-4 italic text-sm leading-relaxed"
-              style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text-on-dark)' }}
+              style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text)' }}
             >
               &ldquo;{item.highlight_quote}&rdquo;
             </blockquote>
@@ -201,7 +309,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
               <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Thoughts</p>
               <ul className="space-y-2">
                 {highlights.map((h, i) => (
-                  <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--text-on-dark)' }}>
+                  <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--text)' }}>
                     <span style={{ color: 'var(--accent)', flexShrink: 0 }}>·</span>
                     {h}
                   </li>
@@ -213,7 +321,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
           {!highlights.length && item.summary && (
             <div className="mb-5">
               <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>Thoughts</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-on-dark)' }}>{item.summary}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>{item.summary}</p>
             </div>
           )}
 
@@ -222,7 +330,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
               <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>Vibes</p>
               <div className="flex flex-wrap gap-2">
                 {item.vibe_tags.map((tag) => (
-                  <span key={tag} className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}>{tag}</span>
+                  <span key={tag} className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'var(--card-bg2)', color: 'var(--chip-text)', border: '1px solid var(--border)' }}>{tag}</span>
                 ))}
               </div>
             </div>
@@ -233,7 +341,7 @@ function ItemDrawer({ item, onClose }: { item: Item; onClose: () => void }) {
               <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--text2)' }}>Genres</p>
               <div className="flex flex-wrap gap-2">
                 {item.genres.map((g) => (
-                  <span key={g} className="text-xs px-2.5 py-1 rounded-lg capitalize" style={{ background: 'var(--surface2)', color: 'var(--chip-text)' }}>{g}</span>
+                  <span key={g} className="text-xs px-2.5 py-1 rounded-lg capitalize" style={{ background: 'var(--card-bg2)', color: 'var(--chip-text)', border: '1px solid var(--border)' }}>{g}</span>
                 ))}
               </div>
             </div>
@@ -317,15 +425,15 @@ function ProfilePage({ items }: { items: Item[] }) {
     <div className="px-4 pt-5 space-y-7 pb-4">
 
       {/* AI taste summary */}
-      <div className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
-        <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Your taste</p>
+      <div className="rounded-2xl p-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+        <p className="text-xs uppercase tracking-widest mb-3 font-bold" style={{ color: 'var(--text2)' }}>Your taste</p>
         {summaryLoading ? (
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0" style={{ borderColor: 'var(--border-dark)', borderTopColor: 'var(--accent)' }} />
+            <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
             <p className="text-sm" style={{ color: 'var(--text2)' }}>Thinking...</p>
           </div>
         ) : tasteSummary ? (
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-on-dark)', fontFamily: "'DM Serif Display', serif", fontSize: '1rem' }}>
+          <p className="leading-relaxed" style={{ color: 'var(--text)', fontFamily: "'DM Serif Display', serif", fontSize: '1.05rem' }}>
             {tasteSummary}
           </p>
         ) : (
@@ -338,9 +446,9 @@ function ProfilePage({ items }: { items: Item[] }) {
       {/* Counts */}
       <div className="grid grid-cols-4 gap-2">
         {byType.map(({ type, count }) => (
-          <div key={type} className="rounded-xl py-3 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
+          <div key={type} className="rounded-xl py-3 text-center" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
             <p className="text-lg">{TYPE_ICON[type]}</p>
-            <p className="text-lg font-semibold mt-0.5" style={{ color: 'var(--text-on-dark)' }}>{count}</p>
+            <p className="text-lg font-bold mt-0.5" style={{ color: 'var(--text)' }}>{count}</p>
           </div>
         ))}
       </div>
@@ -348,7 +456,7 @@ function ProfilePage({ items }: { items: Item[] }) {
       {/* Rating distribution */}
       {byFeeling.length > 0 && (
         <div>
-          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Ratings</p>
+          <p className="text-xs uppercase tracking-widest mb-3 font-bold" style={{ color: 'var(--text2)' }}>Ratings</p>
           <div className="space-y-2.5">
             {byFeeling.map(({ feeling, count }) => (
               <div key={feeling} className="flex items-center gap-3">
@@ -356,10 +464,10 @@ function ProfilePage({ items }: { items: Item[] }) {
                 <div className="flex-1 rounded-full overflow-hidden h-1.5" style={{ background: 'var(--border)' }}>
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${(count / maxFeelingCount) * 100}%`, background: 'var(--accent)' }}
+                    style={{ width: `${(count / maxFeelingCount) * 100}%`, background: 'var(--text)' }}
                   />
                 </div>
-                <span className="text-xs w-4 text-right flex-shrink-0" style={{ color: 'var(--text2)' }}>{count}</span>
+                <span className="text-xs w-4 text-right flex-shrink-0 tabular-nums" style={{ color: 'var(--text2)' }}>{count}</span>
               </div>
             ))}
           </div>
@@ -369,10 +477,10 @@ function ProfilePage({ items }: { items: Item[] }) {
       {/* Top genres */}
       {topGenres.length > 0 && (
         <div>
-          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Favourite genres</p>
+          <p className="text-xs uppercase tracking-widest mb-3 font-bold" style={{ color: 'var(--text2)' }}>Favourite genres</p>
           <div className="flex flex-wrap gap-2">
             {topGenres.map((g) => (
-              <span key={g} className="text-xs px-2.5 py-1.5 rounded-lg capitalize" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)', color: 'var(--chip-text)' }}>{g}</span>
+              <span key={g} className="text-xs px-3 py-1.5 rounded-full capitalize" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--chip-text)' }}>{g}</span>
             ))}
           </div>
         </div>
@@ -381,10 +489,10 @@ function ProfilePage({ items }: { items: Item[] }) {
       {/* Vibe tags */}
       {topVibes.length > 0 && (
         <div>
-          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Your vibes</p>
+          <p className="text-xs uppercase tracking-widest mb-3 font-bold" style={{ color: 'var(--text2)' }}>Your vibes</p>
           <div className="flex flex-wrap gap-2">
             {topVibes.map((t) => (
-              <span key={t} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)', color: 'var(--chip-text)' }}>{t}</span>
+              <span key={t} className="text-xs px-3 py-1.5 rounded-full" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--chip-text)' }}>{t}</span>
             ))}
           </div>
         </div>
@@ -393,12 +501,12 @@ function ProfilePage({ items }: { items: Item[] }) {
       {/* Favourite creators */}
       {topCreators.length > 0 && (
         <div>
-          <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Creators you keep coming back to</p>
+          <p className="text-xs uppercase tracking-widest mb-3 font-bold" style={{ color: 'var(--text2)' }}>Creators you keep coming back to</p>
           <div className="space-y-1.5">
             {topCreators.map(([creator, count]) => (
-              <div key={creator} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border-dark)' }}>
-                <span className="text-sm" style={{ color: 'var(--text-on-dark)' }}>{creator}</span>
-                <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>×{count}</span>
+              <div key={creator} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                <span className="text-sm" style={{ color: 'var(--text)' }}>{creator}</span>
+                <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>×{count}</span>
               </div>
             ))}
           </div>
@@ -450,9 +558,13 @@ export default function Home() {
     loadAll()
   }, [tab])
 
+  const [showAllFinished, setShowAllFinished] = useState(false)
+
   const showSections = tab === 'library' && statusFilters.size === 0
   const inProgress = items.filter((i) => i.status === 'in_progress')
   const finished = items.filter((i) => i.status === 'done' || i.status === 'abandoned')
+  const FINISHED_LIMIT = 9
+  const visibleFinished = showAllFinished ? finished : finished.slice(0, FINISHED_LIMIT)
 
   function switchTab(t: 'library' | 'want' | 'profile') {
     setTab(t)
@@ -461,62 +573,83 @@ export default function Home() {
     setTypeFilters(new Set())
   }
 
-  const NAV = [
-    { key: 'library', label: 'Library', icon: '📚' },
-    { key: 'want',    label: 'Want',    icon: '🔖' },
-    { key: 'profile', label: 'Profile', icon: '✦'  },
-  ] as const
+  const PAGE_TITLES: Record<string, string> = {
+    library: 'LIBRARY',
+    want: 'WANT LIST',
+    profile: 'PROFILE',
+  }
+
+  const PAGE_SUBTITLES: Record<string, string> = {
+    library: 'Your personal library',
+    want: 'Things to read & watch',
+    profile: 'Your taste in numbers',
+  }
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', paddingBottom: '72px' }}>
 
-      {/* Header */}
-      <header className="px-5 pt-12 pb-3">
-        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: '1.75rem', color: 'var(--text)', lineHeight: 1.1 }}>
-          Content Palace
-        </h1>
+      {/* Top bar */}
+      <header className="flex items-center justify-between px-5 pt-12 pb-4">
+        <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--text)' }}>
+          CONTENT PALACE <span style={{ color: 'var(--accent)' }}>•</span>
+        </span>
+        <button style={{ color: 'var(--text2)' }}>
+          <IconSearch size={18} />
+        </button>
       </header>
 
-      {/* Filters (library + want only) */}
+      {/* Page title */}
+      <div className="px-5 pb-4">
+        <h1
+          className="font-black uppercase leading-none"
+          style={{ fontSize: '2.6rem', letterSpacing: '-0.01em', color: 'var(--text)' }}
+        >
+          {PAGE_TITLES[tab]}
+        </h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>{PAGE_SUBTITLES[tab]}</p>
+      </div>
+
+      {/* Filters */}
       {tab !== 'profile' && (
-        <div className="pt-1 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
-          <FilterRow label="Type">
-            <Pill active={typeFilters.size === 0} onClick={() => setTypeFilters(new Set())}>All</Pill>
+        <div className="pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          {/* Type filter */}
+          <div className="flex gap-2 px-5 pb-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <Chip active={typeFilters.size === 0} onClick={() => setTypeFilters(new Set())}>
+              <IconGrid size={11} /> ALL
+            </Chip>
             {(['book', 'film', 'show', 'other'] as const).map((t) => (
-              <Pill key={t} active={typeFilters.has(t)} onClick={() => setTypeFilters(toggleSet(typeFilters, t))}>
-                {TYPE_ICON[t]} {TYPE_LABEL[t]}
-              </Pill>
+              <Chip key={t} active={typeFilters.has(t)} onClick={() => setTypeFilters(toggleSet(typeFilters, t))}>
+                <span className="text-xs">{TYPE_ICON[t]}</span> {TYPE_LABEL[t].toUpperCase()}
+              </Chip>
             ))}
-          </FilterRow>
+          </div>
 
+          {/* Status + rating filter */}
           {tab === 'library' && (
-            <FilterRow label="Status">
-              <Pill active={statusFilters.size === 0} onClick={() => setStatusFilters(new Set())}>All</Pill>
+            <div className="flex gap-2 px-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <Chip active={statusFilters.size === 0 && feelingFilters.size === 0} onClick={() => { setStatusFilters(new Set()); setFeelingFilters(new Set()) }}>
+                ALL
+              </Chip>
               {(['in_progress', 'done', 'abandoned'] as const).map((s) => (
-                <Pill key={s} active={statusFilters.has(s)} onClick={() => setStatusFilters(toggleSet(statusFilters, s))}>
-                  {STATUS_LABEL[s]}
-                </Pill>
+                <Chip key={s} active={statusFilters.has(s)} onClick={() => setStatusFilters(toggleSet(statusFilters, s))}>
+                  {STATUS_LABEL[s].toUpperCase()}
+                </Chip>
               ))}
-            </FilterRow>
-          )}
-
-          {tab === 'library' && (
-            <FilterRow label="Rating">
-              <Pill active={feelingFilters.size === 0} onClick={() => setFeelingFilters(new Set())}>All</Pill>
+              <div className="w-px self-stretch flex-shrink-0" style={{ background: 'var(--border)' }} />
               {FEELINGS.map((f) => (
                 <button
                   key={f}
                   onClick={() => setFeelingFilters(toggleSet(feelingFilters, f))}
-                  className="flex-shrink-0 text-base px-2 py-0.5 rounded-full"
+                  className="flex-shrink-0 text-sm px-2.5 py-1.5 rounded-full"
                   style={{
-                    background: feelingFilters.has(f) ? 'var(--surface)' : 'transparent',
-                    border: `1px solid ${feelingFilters.has(f) ? 'var(--surface)' : 'var(--border)'}`,
+                    background: feelingFilters.has(f) ? 'var(--text)' : 'transparent',
+                    border: `1px solid ${feelingFilters.has(f) ? 'var(--text)' : 'var(--border)'}`,
                   }}
                 >
                   {FEELING_EMOJI[f]}
                 </button>
               ))}
-            </FilterRow>
+            </div>
           )}
         </div>
       )}
@@ -525,16 +658,16 @@ export default function Home() {
       {tab === 'profile' ? (
         loading ? (
           <div className="flex justify-center py-24">
-            <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
+            <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--text)' }} />
           </div>
         ) : (
           <ProfilePage items={allItems} />
         )
       ) : (
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-4">
           {loading ? (
             <div className="flex justify-center py-24">
-              <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
+              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--text)' }} />
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -546,18 +679,34 @@ export default function Home() {
             <div className="space-y-6">
               {showSections && inProgress.length > 0 && (
                 <section>
-                  <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Currently</p>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {inProgress.map((item) => <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />)}
+                  <SectionHeader title="Currently" />
+                  <div
+                    className="flex gap-3 overflow-x-auto pb-1"
+                    style={{ scrollbarWidth: 'none', scrollSnapType: 'x mandatory' }}
+                  >
+                    {inProgress.map((item) => (
+                      <div key={item.id} style={{ minWidth: '82vw', maxWidth: '82vw', scrollSnapAlign: 'start' }}>
+                        <FeaturedCard item={item} onClick={() => setSelected(item)} />
+                      </div>
+                    ))}
                   </div>
                 </section>
               )}
               {showSections && finished.length > 0 && (
                 <section>
-                  {inProgress.length > 0 && <p className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--text2)' }}>Finished</p>}
+                  <SectionHeader title="Finished" />
                   <div className="grid grid-cols-3 gap-2.5">
-                    {finished.map((item) => <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />)}
+                    {visibleFinished.map((item) => <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />)}
                   </div>
+                  {finished.length > FINISHED_LIMIT && (
+                    <button
+                      onClick={() => setShowAllFinished(!showAllFinished)}
+                      className="w-full mt-3 py-2.5 text-xs font-medium tracking-wide uppercase rounded-xl"
+                      style={{ border: '1px solid var(--border)', color: 'var(--text2)' }}
+                    >
+                      {showAllFinished ? 'Show less' : `Show all ${finished.length}`}
+                    </button>
+                  )}
                 </section>
               )}
               {!showSections && (
@@ -574,23 +723,36 @@ export default function Home() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-30 flex"
         style={{
-          background: 'rgba(250,246,240,0.92)',
-          backdropFilter: 'blur(12px)',
+          background: 'rgba(245,240,232,0.94)',
+          backdropFilter: 'blur(16px)',
           borderTop: '1px solid var(--border)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        {NAV.map(({ key, label, icon }) => (
-          <button
-            key={key}
-            onClick={() => switchTab(key)}
-            className="flex-1 flex flex-col items-center py-3 gap-0.5"
-            style={{ color: tab === key ? 'var(--accent)' : 'var(--text2)' }}
-          >
-            <span className="text-lg leading-none">{icon}</span>
-            <span className="text-xs font-medium">{label}</span>
-          </button>
-        ))}
+        <button
+          onClick={() => switchTab('library')}
+          className="flex-1 flex flex-col items-center py-3 gap-1"
+          style={{ color: tab === 'library' ? 'var(--text)' : 'var(--text2)' }}
+        >
+          <IconGrid size={20} />
+          <span className="text-xs font-medium tracking-wide">LIBRARY</span>
+        </button>
+        <button
+          onClick={() => switchTab('want')}
+          className="flex-1 flex flex-col items-center py-3 gap-1"
+          style={{ color: tab === 'want' ? 'var(--text)' : 'var(--text2)' }}
+        >
+          <IconBookmark size={20} />
+          <span className="text-xs font-medium tracking-wide">WANT</span>
+        </button>
+        <button
+          onClick={() => switchTab('profile')}
+          className="flex-1 flex flex-col items-center py-3 gap-1"
+          style={{ color: tab === 'profile' ? 'var(--text)' : 'var(--text2)' }}
+        >
+          <IconPerson size={20} />
+          <span className="text-xs font-medium tracking-wide">PROFILE</span>
+        </button>
       </nav>
 
       {selected && <ItemDrawer item={selected} onClose={() => setSelected(null)} />}

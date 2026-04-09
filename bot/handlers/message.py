@@ -28,9 +28,30 @@ REVISIT_LABELS = {
     "no":    "Nope",
 }
 
-_DELETE_RE = re.compile(r'^(?:delete|remove|удали|удалить)\s+(.+?)(?:\s+entry)?$', re.IGNORECASE)
-_RATE_RE   = re.compile(r'^(?:update|rate|change|оцени)\s+(.+?)\s+(?:rating\s+)?(?:to\s+)?(essential|loved|average|not for me|not_for_me|regret|🔥|❤️|😐|🙈|💀|mid|ok)$', re.IGNORECASE)
-_NOTE_RE   = re.compile(r'^add(?:\s+note)?\s+to\s+(.+?):\s*(.+)$', re.IGNORECASE | re.DOTALL)
+_DELETE_RE    = re.compile(r'^(?:delete|remove|удали|удалить)\s+(.+?)(?:\s+entry)?$', re.IGNORECASE)
+_RATE_RE      = re.compile(r'^(?:update|rate|change|оцени)\s+(.+?)\s+(?:rating\s+)?(?:to\s+)?(essential|loved|average|not for me|not_for_me|regret|🔥|❤️|😐|🙈|💀|mid|ok)$', re.IGNORECASE)
+_RATE_BARE_RE = re.compile(r'^(?:update|rate|change|оцени)\s+(.+?)\s+rating\s*$', re.IGNORECASE)
+_NOTE_RE      = re.compile(
+    r'^(?:'
+    r'add(?:\s+(?:note|to))?\s+to\s+(.+?)(?::|(?:\s+that|\s+saying|\s+-))\s*(.+)'  # "add to X: Y" / "add to X that Y"
+    r'|to\s+(.+?),?\s+add(?:\s+(?:note|that|saying))?\s+(.+)'                       # "to X, add that Y" / "to X add Y"
+    r')$',
+    re.IGNORECASE | re.DOTALL
+)
+_UPDATE_NOTE_RE = re.compile(r'^(?:update|change)\s+(.+?)\s*[-–]\s*(.{10,})$', re.IGNORECASE | re.DOTALL)
+_REWRITE_RE     = re.compile(r'^(?:rewrite|regenerate|recap)\s+(.+)$', re.IGNORECASE)
+
+_STATUS_RE    = re.compile(
+    r'^(?:change|update|mark|set|поменяй|отметь)\s+(.+?)\s+(?:status\s+)?(?:to\s+|as\s+)?(watching|reading|in progress|current|done|finished|completed|watched|read|abandoned|dropped|want|want to watch|want to read)$',
+    re.IGNORECASE
+)
+
+_STATUS_MAP = {
+    "watching": "in_progress", "reading": "in_progress", "in progress": "in_progress", "current": "in_progress",
+    "done": "done", "finished": "done", "completed": "done", "watched": "done", "read": "done",
+    "abandoned": "abandoned", "dropped": "abandoned",
+    "want": "want", "want to watch": "want", "want to read": "want",
+}
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -53,9 +74,33 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await _handle_rate(update, rate_match.group(1).strip(), rate_match.group(2).strip(), telegram_id)
         return
 
+    rate_bare_match = _RATE_BARE_RE.match(text)
+    if rate_bare_match:
+        await _handle_rate_pick(update, rate_bare_match.group(1).strip(), telegram_id)
+        return
+
     note_match = _NOTE_RE.match(text)
     if note_match:
-        await _handle_add_note(update, context, note_match.group(1).strip(), note_match.group(2).strip(), telegram_id)
+        # Groups 1,2 = "add to X: Y" pattern; groups 3,4 = "to X, add Y" pattern
+        title_q = (note_match.group(1) or note_match.group(3) or "").strip()
+        note_text = (note_match.group(2) or note_match.group(4) or "").strip()
+        if title_q and note_text:
+            await _handle_add_note(update, context, title_q, note_text, telegram_id)
+            return
+
+    status_match = _STATUS_RE.match(text)
+    if status_match:
+        await _handle_status_update(update, status_match.group(1).strip(), status_match.group(2).strip(), telegram_id)
+        return
+
+    update_note_match = _UPDATE_NOTE_RE.match(text)
+    if update_note_match and not _RATE_RE.match(text):
+        await _handle_add_note(update, context, update_note_match.group(1).strip(), update_note_match.group(2).strip(), telegram_id)
+        return
+
+    rewrite_match = _REWRITE_RE.match(text)
+    if rewrite_match:
+        await _handle_rewrite(update, context, rewrite_match.group(1).strip(), telegram_id)
         return
 
     # ── State: waiting for feeling rating ──
@@ -67,29 +112,33 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if state == "reflecting":
         item_id = session.get("state_item_id")
         if item_id:
-            database.append_raw_message(item_id, text)
             item = database.get_item(item_id)
-            payload = session.get("state_payload") or {}
-            reflection_count = payload.get("reflection_count", 0)
-            reflection_messages = payload.get("reflection_messages", [])
-            reflection_messages.append(text)
-
-            if reflection_count < 1:
-                question = ai_parser.get_reflection_question(
-                    item["title"], item["type"], reflection_messages,
-                    question_number=2, lang=lang
-                )
-                payload["reflection_count"] = reflection_count + 1
-                payload["reflection_messages"] = reflection_messages
-                database.set_session_state(telegram_id, "reflecting", item_id, payload)
-                await update.message.reply_text(question)
+            if not item:
+                # Item was deleted — reset and fall through to normal parsing below
+                database.set_session_state(telegram_id, "idle")
+                state = "idle"
             else:
-                # Reflection done — generate summary + vibe tags now from what we have
-                context.application.create_task(
-                    _generate_summary_and_tags(item_id, item["title"], reflection_messages)
-                )
-                await _ask_feeling(update, telegram_id, item_id)
-        return
+                database.append_raw_message(item_id, text)
+                payload = session.get("state_payload") or {}
+                reflection_count = payload.get("reflection_count", 0)
+                reflection_messages = payload.get("reflection_messages", [])
+                reflection_messages.append(text)
+
+                if reflection_count < 1:
+                    question = ai_parser.get_reflection_question(
+                        item["title"], item["type"], reflection_messages,
+                        question_number=2, lang=lang
+                    )
+                    payload["reflection_count"] = reflection_count + 1
+                    payload["reflection_messages"] = reflection_messages
+                    database.set_session_state(telegram_id, "reflecting", item_id, payload)
+                    await update.message.reply_text(question)
+                else:
+                    context.application.create_task(
+                        _generate_summary_and_tags(item_id, item["title"], reflection_messages)
+                    )
+                    await _ask_feeling(update, telegram_id, item_id)
+                return
 
     # ── State: waiting for quote (optional) ──
     if state == "awaiting_quote":
@@ -123,8 +172,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     title = parsed["title"]
-    item_type = parsed.get("type", "other")
-    status = parsed.get("status", "want")
+    raw_type = parsed.get("type", "other")
+    item_type = raw_type if raw_type in ("book", "film", "show", "other") else "other"
+    raw_status = parsed.get("status", "want")
+    status = raw_status if raw_status in ("want", "in_progress", "done", "abandoned") else "want"
+    subtype = parsed.get("subtype") if item_type == "other" else None
 
     # Check for duplicate
     existing = database.find_existing_item(title, item_type, telegram_id)
@@ -137,6 +189,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if status == "done" and not existing.get("finished_at"):
             from datetime import date
             update_data["finished_at"] = date.today().isoformat()
+        if subtype and not existing.get("subtype"):
+            update_data["subtype"] = subtype
 
         item = database.update_item(existing["id"], update_data)
         item_id = existing["id"]
@@ -153,6 +207,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "source_url": parsed.get("source_url"),
             "telegram_id": telegram_id,
         }
+        if subtype:
+            item_data["subtype"] = subtype
         if status == "in_progress":
             item_data["started_at"] = today
         if status == "done":
@@ -163,7 +219,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         action = "added"
 
     context.application.create_task(
-        _fetch_and_update_metadata(item_id, title, item_type)
+        _fetch_and_update_metadata(item_id, title, item_type, parsed.get("source_url"))
     )
 
     await _send_confirmation(update, item, action, status)
@@ -212,6 +268,29 @@ async def _handle_delete(update: Update, title_query: str, telegram_id: int):
         )
 
 
+async def _handle_rate_pick(update: Update, title_query: str, telegram_id: int):
+    """Show rating buttons when no rating value was given."""
+    matches = database.find_items_fuzzy(title_query, telegram_id)
+    if not matches:
+        await update.message.reply_text(f"Couldn't find anything matching \"{title_query}\".")
+        return
+
+    item = matches[0] if len(matches) == 1 else None
+    if len(matches) > 1:
+        # Let user pick item first, then we'd need another step — for now just use closest match
+        item = matches[0]
+
+    keyboard = [
+        [InlineKeyboardButton(label, callback_data=f"rate_item:{item['id']}:{key}")]
+        for key, label in FEELING_LABELS.items()
+    ]
+    await update.message.reply_text(
+        f"Rate *{item['title']}*:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+
+
 async def _handle_rate(update: Update, title_query: str, feeling_text: str, telegram_id: int):
     feeling = FEELING_TEXT_MAP.get(feeling_text.lower())
     if not feeling:
@@ -242,6 +321,35 @@ async def _handle_rate(update: Update, title_query: str, feeling_text: str, tele
             "Found multiple matches. Which one?",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+
+async def _handle_status_update(update: Update, title_query: str, status_text: str, telegram_id: int):
+    status = _STATUS_MAP.get(status_text.lower())
+    if not status:
+        await update.message.reply_text(f"Unknown status \"{status_text}\".")
+        return
+
+    matches = database.find_items_fuzzy(title_query, telegram_id)
+    if not matches:
+        await update.message.reply_text(f"Couldn't find anything matching \"{title_query}\".")
+        return
+
+    item = matches[0]
+    update_data: dict = {"status": status}
+    from datetime import date
+    today = date.today().isoformat()
+    if status == "in_progress" and not item.get("started_at"):
+        update_data["started_at"] = today
+    if status == "done" and not item.get("finished_at"):
+        update_data["finished_at"] = today
+
+    database.update_item(item["id"], update_data)
+
+    status_labels = {"want": "Want list", "in_progress": "Currently watching/reading", "done": "Finished", "abandoned": "Abandoned"}
+    await update.message.reply_text(
+        f"✓ *{item['title']}* → {status_labels[status]}",
+        parse_mode="Markdown"
+    )
 
 
 async def _handle_add_note(update: Update, context: ContextTypes.DEFAULT_TYPE, title_query: str, note: str, telegram_id: int):
@@ -289,14 +397,40 @@ async def _generate_summary_and_tags(item_id: str, title: str, messages: list[st
             max_tokens=100,
             messages=[{"role": "user", "content": f"""Based on this reflection about "{title}": {summary}
 
-Return 3-4 vibe tags as a JSON array. Short, evocative, lowercase.
-Examples: ["slow burn", "dark", "atmospheric", "thought-provoking", "funny", "emotional", "rewatchable", "disturbing", "hopeful", "dense"]
-JSON only."""}]
+Generate 2-4 vibe tags as a JSON array.
+
+Mix two types:
+1. Tone/feel of the content (e.g. dark, funny, slow burn, intense, cozy, disturbing) — infer from what you know about it if not mentioned
+2. Emotional experience from their words (e.g. "first seasons only", "consistently good", "lost the plot", "couldn't stop", "left me cold", "mind-blowing") — only from what they actually said
+
+Rules:
+- 2-4 tags total, no overlap or repetition between them
+- Each tag should say something different
+- Short, lowercase, no quotes inside
+- If experience and tone would overlap, drop the redundant one
+
+JSON only, no markdown fences."""}]
         )
-        tags = json.loads(response.content[0].text.strip())
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        tags = json.loads(raw)
         database.update_item(item_id, {"vibe_tags": tags})
     except Exception:
         pass
+
+
+async def _handle_rewrite(update: Update, context: ContextTypes.DEFAULT_TYPE, title_query: str, telegram_id: int):
+    matches = database.find_items_fuzzy(title_query, telegram_id)
+    if not matches:
+        await update.message.reply_text(f"Couldn't find anything matching \"{title_query}\".")
+        return
+    item = matches[0]
+    if not item.get("raw_messages"):
+        await update.message.reply_text(f"No messages saved for *{item['title']}* to rewrite from.", parse_mode="Markdown")
+        return
+    await update.message.reply_text(f"Rewriting thoughts for *{item['title']}*...", parse_mode="Markdown")
+    context.application.create_task(_regenerate_summary(update, item["id"]))
 
 
 async def _regenerate_summary(update: Update, item_id: str):
@@ -326,9 +460,9 @@ async def _send_reflection_question(update: Update, telegram_id: int, item_id: s
         pass
 
 
-async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str):
+async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, source_url: str | None = None):
     try:
-        data = await metadata.fetch_metadata(title, item_type)
+        data = await metadata.fetch_metadata(title, item_type, source_url)
         if data:
             data.pop("title", None)
             database.update_item(item_id, data)
@@ -407,6 +541,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         item = database.get_item(item_id)
         if item:
             database.delete_item(item_id)
+            # Reset session if it was pointing at this item
+            session = database.get_session(telegram_id)
+            if session.get("state_item_id") == item_id:
+                database.set_session_state(telegram_id, "idle")
             await query.edit_message_text(f"✓ Deleted *{item['title']}*.", parse_mode="Markdown")
         else:
             await query.edit_message_text("Item not found.")
@@ -500,11 +638,25 @@ async def _generate_and_save_tags(item_id: str, item: dict):
         max_tokens=100,
         messages=[{"role": "user", "content": f"""Based on this reflection about "{item['title']}": {item['summary']}
 
-Return 3-4 vibe tags as a JSON array. Examples: ["slow burn", "dark", "atmospheric", "thought-provoking", "funny", "emotional", "page-turner", "light", "rewatchable", "demanding"]
+Generate 2-4 vibe tags as a JSON array.
+
+Mix two types:
+1. Tone/feel of the content (e.g. dark, funny, slow burn, intense, cozy, disturbing) — infer from what you know about it if not mentioned
+2. Emotional experience from their words (e.g. "first seasons only", "consistently good", "lost the plot", "couldn't stop", "left me cold", "mind-blowing") — only from what they actually said
+
+Rules:
+- 2-4 tags total, no overlap or repetition between them
+- Each tag should say something different
+- Short, lowercase, no quotes inside
+- If experience and tone would overlap, drop the redundant one
+
 JSON only, no other text."""}]
     )
     try:
-        tags = _json.loads(response.content[0].text.strip())
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        tags = _json.loads(raw)
         database.update_item(item_id, {"vibe_tags": tags})
         item["vibe_tags"] = tags
     except Exception:

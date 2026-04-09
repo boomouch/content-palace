@@ -56,11 +56,20 @@ def get_item(item_id: str) -> dict:
 
 
 def find_existing_item(title: str, item_type: str, telegram_id: int) -> dict | None:
-    """Fuzzy search for a single existing item to avoid duplicates."""
+    """Fuzzy search for a single existing item. Tries exact type first, then any type."""
     db = get_db()
+    # Try exact type match first
     result = db.table("items").select("*") \
         .ilike("title", f"%{title}%") \
         .eq("type", item_type) \
+        .eq("telegram_id", telegram_id) \
+        .limit(1) \
+        .execute()
+    if result.data:
+        return result.data[0]
+    # Fall back to any type — catches film/show misclassifications
+    result = db.table("items").select("*") \
+        .ilike("title", f"%{title}%") \
         .eq("telegram_id", telegram_id) \
         .limit(1) \
         .execute()

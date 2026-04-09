@@ -8,6 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 export type Item = {
   id: string
   type: 'book' | 'film' | 'show' | 'other'
+  subtype: string | null
   title: string
   creator: string | null
   year: number | null

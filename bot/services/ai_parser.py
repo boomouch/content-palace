@@ -14,6 +14,7 @@ Message: "{message}"
 Return this JSON structure:
 {{
   "type": "book" | "film" | "show" | "other" | "unknown",
+  "subtype": "youtube" | "podcast" | "newsletter" | "article" | "blog" | "documentary" | "course" | null,
   "title": "string or null",
   "creator": "string or null",
   "status": "want" | "in_progress" | "done" | "abandoned" | "unknown",
@@ -31,7 +32,12 @@ Rules:
 - "gave up", "stopped", "couldn't finish", "abandoned" → status: abandoned
 - If message is a question about a book/film/show → is_question: true
 - If a URL is present, put it in source_url and infer type from domain
-- YouTube channels, podcasts, newsletters, articles, blogs → type: other (NOT show)
+- type: film by default for "watched X" unless explicitly called "show", "series", "TV show", "season", "episode", or it's clearly a well-known TV series
+- type: show only when user says "show", "series", "TV", "season", "episode", or it's unambiguously a TV series
+- type: book only when explicitly reading
+- YouTube channels/shows, podcasts, newsletters, articles, blogs → type: other (NOT show)
+- For type: other, always set subtype: youtube | podcast | newsletter | article | blog | documentary | course
+- Infer subtype from context: "youtube", "channel", "episode" → youtube; "podcast", "episode" → podcast; "newsletter", "substack" → newsletter; "course", "udemy", "masterclass" → course
 - Map sentiment to feeling:
   - "must/essential/life-changing/changed me" → essential
   - "loved/amazing/incredible/favourite/brilliant/masterpiece" → loved
@@ -70,25 +76,25 @@ Rules:
 - 1 sentence, casual and direct
 - Reply in: {lang}"""
 
-SUMMARY_PROMPT = """Distill what this person said about "{title}" into sharp, memorable observations.
+SUMMARY_PROMPT = """Clean up what this person said about "{title}" into 3-5 bullet points.
 
 Their messages:
 {messages}
 
-Return a JSON array of 3-5 bullet strings. Rules:
-- Rework their words — don't just quote or paraphrase them
-- Each bullet should be a crisp insight or strong opinion, not a description
-- Strip filler — cut "I think", "it was", "really", "kind of"
-- If they said something vague, make it specific and concrete
-- If they contradicted themselves, pick the stronger opinion
-- Punchy, direct, opinionated — like a good review pulled apart into its best lines
-- Max 10 words each, no bullet symbols, no numbering
+Return a JSON array of bullet strings. Rules:
+- Keep their words and phrasing as close as possible — this should sound like them, not like a review
+- Only fix spelling, grammar, and awkward phrasing — don't rephrase ideas or add new ones
+- Keep slang, casual tone, humour, "lol", strong opinions exactly as they are
+- Split long run-on thoughts into separate bullets where it makes sense
+- Remove filler like "I think", "it was like", "kind of", "you know"
+- No bullet symbols, no numbering
+- Each bullet max 15 words
 
-Bad: "I thought the characters were quite interesting and well developed"
-Good: "Characters feel like real people, not plot devices"
+Bad: "Doesn't hurt that the main character is easy on the eyes"
+Good: "The main character is genuinely very hot"
 
-Bad: "The ending was surprising and I didn't expect it"
-Good: "Ending reframes everything — didn't see it coming"
+Bad: "The narrative tension is maintained despite implausible plot developments"
+Good: "Don't think too hard or it falls apart, but it'll keep you hooked"
 
 JSON array only, no other text."""
 
