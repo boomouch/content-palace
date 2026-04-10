@@ -1,4 +1,5 @@
 import os
+import asyncio
 import httpx
 from dotenv import load_dotenv
 
@@ -10,12 +11,44 @@ TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 OL_BASE = "https://openlibrary.org"
 
 
-async def fetch_metadata(title: str, item_type: str, source_url: str | None = None) -> dict:
+async def fetch_tmdb_candidates(title: str, item_type: str, limit: int = 3, lang: str = "en") -> list[dict]:
+    """Return top TMDB results for disambiguation. Strips trailing year from title before searching."""
+    import re
+    clean_title = re.sub(r'\s+\d{4}$', '', title.strip())
+    endpoint = "movie" if item_type == "film" else "tv"
+    title_key = "title" if item_type == "film" else "name"
+    date_key = "release_date" if item_type == "film" else "first_air_date"
+    headers = {"Authorization": f"Bearer {TMDB_TOKEN}"}
+    tmdb_lang = "ru-RU" if lang == "ru" else "en-US"
+    try:
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(
+                f"{TMDB_BASE}/search/{endpoint}",
+                headers=headers,
+                params={"query": clean_title, "language": tmdb_lang, "page": 1},
+                timeout=8,
+            )
+            results = resp.json().get("results", [])
+        candidates = []
+        for r in results[:limit]:
+            raw_date = r.get(date_key, "")
+            year = int(raw_date[:4]) if raw_date else None
+            candidates.append({
+                "tmdb_id": r["id"],
+                "title": r.get(title_key, title),
+                "year": year,
+            })
+        return candidates
+    except Exception:
+        return []
+
+
+async def fetch_metadata(title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None) -> dict:
     """Fetch metadata for a given title and type. Returns enriched data dict."""
     if item_type == "book":
         return await _fetch_book(title)
     elif item_type in ("film", "show"):
-        return await _fetch_tmdb(title, item_type)
+        return await _fetch_tmdb(title, item_type, tmdb_id=tmdb_id)
     elif source_url and ("youtube.com" in source_url or "youtu.be" in source_url):
         return await _fetch_youtube(source_url, title)
     elif item_type == "other":
@@ -63,49 +96,111 @@ async def _fetch_ddg(title: str) -> dict:
         return {}
 
 
-async def _fetch_tmdb(title: str, item_type: str) -> dict:
+async def _fetch_tmdb_ru(tmdb_id: int, endpoint: str, title_key: str) -> tuple[str | None, str | None, list[str]]:
+    """Fetch Russian title, description, and genres for a TMDB item."""
+    headers = {"Authorization": f"Bearer {TMDB_TOKEN}"}
+    try:
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(
+                f"{TMDB_BASE}/{endpoint}/{tmdb_id}",
+                headers=headers,
+                params={"language": "ru-RU"},
+                timeout=5,
+            )
+            data = resp.json()
+        title_ru = data.get(title_key) or None
+        description_ru = data.get("overview") or None
+        genres_ru = [g["name"].lower() for g in data.get("genres", [])]
+        return title_ru, description_ru, genres_ru
+    except Exception:
+        return None, None, []
+
+
+async def _fetch_tmdb(title: str, item_type: str, tmdb_id: int | None = None) -> dict:
     endpoint = "movie" if item_type == "film" else "tv"
+    title_key = "title" if item_type == "film" else "name"
+    date_key = "release_date" if item_type == "film" else "first_air_date"
     headers = {"Authorization": f"Bearer {TMDB_TOKEN}"}
 
-    async with httpx.AsyncClient() as http:
-        resp = await http.get(
-            f"{TMDB_BASE}/search/{endpoint}",
-            headers=headers,
-            params={"query": title, "language": "en-US", "page": 1}
-        )
-        data = resp.json()
+    if tmdb_id:
+        # Fetch directly by ID — no search needed
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(
+                f"{TMDB_BASE}/{endpoint}/{tmdb_id}",
+                headers=headers,
+                params={"language": "en-US"},
+                timeout=8,
+            )
+            top = resp.json()
+        if not top.get("id"):
+            return {}
+    else:
+        results = []
+        # Try EN first, fall back to RU (handles titles logged in Russian)
+        for lang_code in ["en-US", "ru-RU"]:
+            async with httpx.AsyncClient() as http:
+                resp = await http.get(
+                    f"{TMDB_BASE}/search/{endpoint}",
+                    headers=headers,
+                    params={"query": title, "language": lang_code, "page": 1}
+                )
+                results = resp.json().get("results", [])
+            if results:
+                break
 
-    results = data.get("results", [])
-    if not results:
-        return {}
+        if not results:
+            return {}
 
-    top = results[0]
+        top = results[0]
+        tmdb_id = top["id"]
+
     cover_url = f"{TMDB_IMG}{top['poster_path']}" if top.get("poster_path") else None
 
+    # Fetch RU localization in parallel with other detail calls
     if item_type == "film":
-        return {
-            "external_id": str(top["id"]),
+        creator, genres, (title_ru, description_ru, genres_ru) = await asyncio.gather(
+            _get_tmdb_director(tmdb_id),
+            _get_tmdb_genres(tmdb_id, "movie"),
+            _fetch_tmdb_ru(tmdb_id, endpoint, title_key),
+        )
+        result = {
+            "external_id": str(tmdb_id),
             "external_source": "tmdb",
-            "title": top.get("title", title),
-            "creator": await _get_tmdb_director(top["id"]),
-            "year": int(top["release_date"][:4]) if top.get("release_date") else None,
+            "title": top.get(title_key, title),
+            "creator": creator,
+            "year": int(top[date_key][:4]) if top.get(date_key) else None,
             "description": top.get("overview"),
             "cover_url": cover_url,
-            "genres": await _get_tmdb_genres(top["id"], "movie"),
+            "genres": genres,
             "metadata_raw": top,
         }
     else:
-        return {
-            "external_id": str(top["id"]),
+        creator, genres, (title_ru, description_ru, genres_ru) = await asyncio.gather(
+            _get_tmdb_show_creator(tmdb_id),
+            _get_tmdb_genres(tmdb_id, "tv"),
+            _fetch_tmdb_ru(tmdb_id, endpoint, title_key),
+        )
+        result = {
+            "external_id": str(tmdb_id),
             "external_source": "tmdb",
-            "title": top.get("name", title),
-            "creator": await _get_tmdb_show_creator(top["id"]),
-            "year": int(top["first_air_date"][:4]) if top.get("first_air_date") else None,
+            "title": top.get(title_key, title),
+            "creator": creator,
+            "year": int(top[date_key][:4]) if top.get(date_key) else None,
             "description": top.get("overview"),
             "cover_url": cover_url,
-            "genres": await _get_tmdb_genres(top["id"], "tv"),
+            "genres": genres,
             "metadata_raw": top,
         }
+
+    # Only store RU if it's actually different
+    if title_ru and title_ru != result["title"]:
+        result["title_ru"] = title_ru
+    if description_ru:
+        result["description_ru"] = description_ru
+    if genres_ru:
+        result["genres_ru"] = genres_ru
+
+    return result
 
 
 async def _get_tmdb_director(movie_id: int) -> str | None:

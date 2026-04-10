@@ -56,11 +56,12 @@ def get_item(item_id: str) -> dict:
 
 
 def find_existing_item(title: str, item_type: str, telegram_id: int) -> dict | None:
-    """Fuzzy search for a single existing item. Tries exact type first, then any type."""
+    """Fuzzy search for a single existing item. Searches both title and title_ru."""
     db = get_db()
+    fil = f"title.ilike.%{title}%,title_ru.ilike.%{title}%"
     # Try exact type match first
     result = db.table("items").select("*") \
-        .ilike("title", f"%{title}%") \
+        .or_(fil) \
         .eq("type", item_type) \
         .eq("telegram_id", telegram_id) \
         .limit(1) \
@@ -69,7 +70,7 @@ def find_existing_item(title: str, item_type: str, telegram_id: int) -> dict | N
         return result.data[0]
     # Fall back to any type — catches film/show misclassifications
     result = db.table("items").select("*") \
-        .ilike("title", f"%{title}%") \
+        .or_(fil) \
         .eq("telegram_id", telegram_id) \
         .limit(1) \
         .execute()
@@ -77,10 +78,11 @@ def find_existing_item(title: str, item_type: str, telegram_id: int) -> dict | N
 
 
 def find_items_fuzzy(title: str, telegram_id: int, limit: int = 5) -> list[dict]:
-    """Fuzzy search across all types, returns up to `limit` matches."""
+    """Fuzzy search across all types. Searches both title and title_ru columns."""
     db = get_db()
+    fil = f"title.ilike.%{title}%,title_ru.ilike.%{title}%"
     result = db.table("items").select("*") \
-        .ilike("title", f"%{title}%") \
+        .or_(fil) \
         .eq("telegram_id", telegram_id) \
         .limit(limit) \
         .execute()
@@ -94,3 +96,31 @@ def append_raw_message(item_id: str, message: str):
         messages = item.get("raw_messages") or []
         messages.append(message)
         update_item(item_id, {"raw_messages": messages})
+
+
+def get_or_create_user(telegram_id: int, name: str, lang: str = 'en') -> dict:
+    db = get_db()
+    result = db.table("users").select("*").eq("telegram_id", telegram_id).execute()
+    if result.data:
+        return result.data[0]
+    new_user = {"telegram_id": telegram_id, "name": name, "lang": lang, "avatar_emoji": "🎬", "color": "#6366f1"}
+    result = db.table("users").insert(new_user).execute()
+    return result.data[0] if result.data else new_user
+
+
+def get_user(telegram_id: int) -> dict | None:
+    db = get_db()
+    result = db.table("users").select("*").eq("telegram_id", telegram_id).execute()
+    return result.data[0] if result.data else None
+
+
+def update_user(telegram_id: int, data: dict) -> dict:
+    db = get_db()
+    result = db.table("users").update(data).eq("telegram_id", telegram_id).execute()
+    return result.data[0] if result.data else None
+
+
+def get_all_users() -> list[dict]:
+    db = get_db()
+    result = db.table("users").select("id, name, telegram_id, lang, avatar_emoji, color").order("created_at").execute()
+    return result.data or []

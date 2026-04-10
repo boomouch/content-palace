@@ -45,34 +45,49 @@ Rules:
   - "didn't like/bad/boring/disappointing/not for me/not my thing" → not_for_me
   - "waste of time/hate/terrible/awful/worst/regret watching" → regret
 - If type is ambiguous, set confidence: low and explain in ambiguity field
-- If no clear media item is mentioned, set title: null"""
+- If no clear media item is mentioned, set title: null
+- title: use the most recognizable English name of the work (e.g. "мизери" → "Misery", "дюна" → "Dune"). For titles already in English, keep as-is."""
 
-REFLECT_PROMPT_Q1 = """Someone just finished "{title}" ({type}) and said: "{message}"
+REFLECT_PROMPT_Q1 = """You are asking a friend one question after they logged something they finished.
 
-Ask them ONE question about what specifically worked or didn't — the story, characters, ideas, pacing, or tone. Force them to be specific, not vague.
+Their message: "{message}"
 
-Rules:
-- Must be impossible to answer in 1-2 words — they need a full sentence at minimum
-- If they seem negative or mixed: ask what specifically went wrong or disappointed them
-- If they seem positive: ask what made it different or better than similar things they've seen/read
-- If neutral: ask what they'll actually remember about it
-- Don't ask "what did you think?" or "did you enjoy it?" — too generic
-- 1 sentence, casual and direct, no bullet points
-- Reply in: {lang}"""
+Look only at the words in their message. Ignore what you know about the title.
+
+Does their message contain an opinion word — something like: loved, hated, boring, amazing, terrible, disappointing, incredible, not for me, couldn't stop, mind-blowing, depressing, beautiful, awful, etc.?
+
+If YES: ask one question that drills into that specific word/feeling.
+If NO: ask simply "how did you find it?" or "what did you think?" — nothing more specific.
+
+Examples:
+"read Misery" → "how did you find it?"
+"watched Dune" → "what did you think?"
+"watched Midsommar - hated it" → "what put you off?"
+"read Sapiens - mind blowing" → "what changed your thinking?"
+"finished Joker - so disappointing" → "what fell flat?"
+
+Output only the question. No explanation. One sentence.
+Language: {lang}"""
 
 REFLECT_PROMPT_Q2 = """Someone just finished "{title}" ({type}).
 
 Their thoughts so far:
 {messages}
 
-Ask them ONE question about meaning or perspective — push them to reflect beyond just describing what happened.
+Ask them ONE question that helps capture the overall experience — the kind of answer that would become a vibe tag or a bullet point in a short personal review.
 
-Good angles: what it changed or confirmed about something they believed, what it says about the kind of person who loves this, whether it made them uncomfortable and why, what they'd tell someone who said it's overrated (or overhated).
+Good angles (pick the most relevant given what they said):
+- Would they recommend it, and to who specifically?
+- What kind of mood or feeling did it leave them with?
+- Was it what they expected, or did it surprise them?
+- How does it compare to similar things they've seen/read?
+- What would they warn someone about before watching/reading it?
+- Is it worth the time investment?
 
 Rules:
-- Must be impossible to answer in 1-2 words
-- Don't repeat anything already covered in their messages above
-- Push for genuine reflection, not more description
+- Don't ask about specific scenes, characters, or plot details — those don't help with summary or vibes
+- The answer should produce something like "slow burn but worth it", "not for everyone", "better than expected", "leaves you unsettled" — that kind of thing
+- Directly follow up on the tone of what they said
 - 1 sentence, casual and direct
 - Reply in: {lang}"""
 
@@ -81,7 +96,10 @@ SUMMARY_PROMPT = """Clean up what this person said about "{title}" into 3-5 bull
 Their messages:
 {messages}
 
+Reply language: {lang_name}
+
 Return a JSON array of bullet strings. Rules:
+- The first message is often just the logging trigger (e.g. "watched X", "finished X", "read X") — skip it if it contains no actual opinion or thought
 - Keep their words and phrasing as close as possible — this should sound like them, not like a review
 - Only fix spelling, grammar, and awkward phrasing — don't rephrase ideas or add new ones
 - Keep slang, casual tone, humour, "lol", strong opinions exactly as they are
@@ -113,6 +131,42 @@ Return JSON only:
 
 Priority: if they finished a book, consider its film adaptation first. Otherwise suggest something thematically similar.
 Only suggest if you're confident it's a genuinely good match. If not sure, return null."""
+
+
+TRANSLATE_PROMPT = """Translate these personal media notes to {target_lang}.
+
+highlights (short bullet strings): {highlights}
+summary (plain text): {summary}
+vibe_tags (short tag strings): {vibe_tags}
+
+Rules:
+- Keep the same casual tone and voice — these are personal opinions
+- highlights: each bullet max 15 words, preserve slang and strong opinions
+- vibe_tags: short lowercase tags (e.g. "slow burn" → "медленное нарастание", "mind-blowing" → "срывает крышу")
+- summary: match the original tone exactly
+- Return JSON only, no other text:
+{{"highlights": [...], "summary": "...", "vibe_tags": [...]}}"""
+
+
+def translate_content(highlights: list, summary: str, vibe_tags: list, target_lang: str) -> dict:
+    """Translate highlights, summary, vibe_tags to target language. Returns dict with translated values."""
+    if not any([highlights, summary, vibe_tags]):
+        return {}
+    lang_name = "Russian" if target_lang == "ru" else "English"
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=500,
+        messages=[{"role": "user", "content": TRANSLATE_PROMPT.format(
+            target_lang=lang_name,
+            highlights=json.dumps(highlights or [], ensure_ascii=False),
+            summary=summary or "",
+            vibe_tags=json.dumps(vibe_tags or [], ensure_ascii=False),
+        )}]
+    )
+    try:
+        return json.loads(_clean_json(response.content[0].text))
+    except (json.JSONDecodeError, AttributeError):
+        return {}
 
 
 def _clean_json(text: str) -> str:
@@ -172,13 +226,14 @@ def quick_reply(key: str, lang: str = "en") -> str:
     return msg.get(lang) or msg.get(lang[:2]) or msg.get("en", "")
 
 
-def generate_summary(title: str, messages: list[str]) -> tuple[list[str], str]:
+def generate_summary(title: str, messages: list[str], lang: str = "en") -> tuple[list[str], str]:
     messages_text = "\n".join(f"- {m}" for m in messages)
+    lang_name = "Russian" if lang == "ru" else "English"
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=300,
         messages=[{"role": "user", "content": SUMMARY_PROMPT.format(
-            title=title, messages=messages_text
+            title=title, messages=messages_text, lang_name=lang_name
         )}]
     )
     try:

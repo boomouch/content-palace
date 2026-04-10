@@ -4,6 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from services import ai_parser, database, metadata
+# database.get_user is used for language preference lookup
 
 
 FEELING_LABELS = {
@@ -12,6 +13,14 @@ FEELING_LABELS = {
     "average":   "😐 Average",
     "not_for_me":"🙈 Not for me",
     "regret":    "💀 Regret it",
+}
+
+FEELING_LABELS_RU = {
+    "essential": "🔥 Маст-си",
+    "loved":     "❤️ Понравилось",
+    "average":   "😐 Нормально",
+    "not_for_me":"🙈 Не моё",
+    "regret":    "💀 Зря потратил(а) время",
 }
 
 FEELING_TEXT_MAP = {
@@ -28,6 +37,40 @@ REVISIT_LABELS = {
     "no":    "Nope",
 }
 
+REVISIT_LABELS_RU = {
+    "yes":   "✓ Пересмотрю/перечитаю",
+    "maybe": "Может быть",
+    "no":    "Вряд ли",
+}
+
+
+def _titles_match(input_title: str, found_title: str) -> bool:
+    """Return True if the found title is close enough to what the user typed — no confirmation needed."""
+    a = input_title.lower().strip()
+    b = found_title.lower().strip()
+    # Exact or substring match
+    if a in b or b in a:
+        return True
+    # Check if any word from input appears in found title (handles transliterations like "мизери" → "misery")
+    words_a = set(a.split())
+    words_b = set(b.split())
+    if words_a & words_b:
+        return True
+    return False
+
+
+def _feeling_labels(lang: str) -> dict:
+    return FEELING_LABELS_RU if lang == "ru" else FEELING_LABELS
+
+
+def _revisit_labels(lang: str) -> dict:
+    return REVISIT_LABELS_RU if lang == "ru" else REVISIT_LABELS
+
+
+def _get_lang(telegram_id: int) -> str:
+    user = database.get_user(telegram_id)
+    return user.get("lang", "en") if user else "en"
+
 _DELETE_RE    = re.compile(r'^(?:delete|remove|удали|удалить)\s+(.+?)(?:\s+entry)?$', re.IGNORECASE)
 _RATE_RE      = re.compile(r'^(?:update|rate|change|оцени)\s+(.+?)\s+(?:rating\s+)?(?:to\s+)?(essential|loved|average|not for me|not_for_me|regret|🔥|❤️|😐|🙈|💀|mid|ok)$', re.IGNORECASE)
 _RATE_BARE_RE = re.compile(r'^(?:update|rate|change|оцени)\s+(.+?)\s+rating\s*$', re.IGNORECASE)
@@ -38,6 +81,9 @@ _NOTE_RE      = re.compile(
     r')$',
     re.IGNORECASE | re.DOTALL
 )
+# Note prefixes — no separator required; handler does progressive search
+_RU_NOTE_RE   = re.compile(r'^добав(?:ить|ь|и)(?:\s+заметку)?\s+к\s+(.+)$', re.IGNORECASE | re.DOTALL)
+_EN_NOTE_RE   = re.compile(r'^add(?:\s+(?:note|to))?\s+to\s+(.+)$', re.IGNORECASE | re.DOTALL)
 _UPDATE_NOTE_RE = re.compile(r'^(?:update|change)\s+(.+?)\s*[-–]\s*(.{10,})$', re.IGNORECASE | re.DOTALL)
 _REWRITE_RE     = re.compile(r'^(?:rewrite|regenerate|recap)\s+(.+)$', re.IGNORECASE)
 
@@ -57,11 +103,30 @@ _STATUS_MAP = {
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = update.effective_user.id
     telegram_handle = update.effective_user.username
-    lang = update.effective_user.language_code or "en"
     text = update.message.text.strip()
+
+    # Use stored user language preference; fall back to Telegram locale
+    user_record = database.get_user(telegram_id)
+    if user_record:
+        lang = user_record.get("lang", "en")
+    else:
+        raw_lang = update.effective_user.language_code or "en"
+        lang = raw_lang[:2] if raw_lang else "en"
 
     session = database.get_session(telegram_id, telegram_handle)
     state = session.get("state", "idle")
+
+    # ── Awaiting note text (after "добавить к X" with no note) ──
+    awaiting_note_item_id = context.bot_data.pop(f"awaiting_note_{telegram_id}", None)
+    if awaiting_note_item_id:
+        item = database.get_item(awaiting_note_item_id)
+        if item:
+            database.append_raw_message(awaiting_note_item_id, text)
+            display_title = item.get("title_ru") or item["title"] if lang == "ru" else item["title"]
+            msg = f"Заметка добавлена к *{display_title}*. Обновляю summary..." if lang == "ru" else f"Note added to *{display_title}*. Updating summary..."
+            await update.message.reply_text(msg, parse_mode="Markdown")
+            context.application.create_task(_regenerate_summary(update, awaiting_note_item_id))
+            return
 
     # ── Commands always take priority over session state ──
     delete_match = _DELETE_RE.match(text)
@@ -81,12 +146,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     note_match = _NOTE_RE.match(text)
     if note_match:
-        # Groups 1,2 = "add to X: Y" pattern; groups 3,4 = "to X, add Y" pattern
+        # Groups 1,2 = "add to X: Y"; 3,4 = "to X, add Y"
         title_q = (note_match.group(1) or note_match.group(3) or "").strip()
         note_text = (note_match.group(2) or note_match.group(4) or "").strip()
         if title_q and note_text:
             await _handle_add_note(update, context, title_q, note_text, telegram_id)
             return
+
+    ru_note_match = _RU_NOTE_RE.match(text)
+    if ru_note_match:
+        await _handle_ru_note(update, context, ru_note_match.group(1).strip(), telegram_id, lang)
+        return
+
+    en_note_match = _EN_NOTE_RE.match(text)
+    if en_note_match:
+        await _handle_ru_note(update, context, en_note_match.group(1).strip(), telegram_id, lang)
+        return
 
     status_match = _STATUS_RE.match(text)
     if status_match:
@@ -105,7 +180,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # ── State: waiting for feeling rating ──
     if state == "awaiting_feeling":
-        await update.message.reply_text("Use the buttons above to rate your feeling ↑")
+        msg = "Используй кнопки выше ↑" if lang == "ru" else "Use the buttons above to rate your feeling ↑"
+        await update.message.reply_text(msg)
         return
 
     # ── State: mid-reflection conversation ──
@@ -182,6 +258,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     existing = database.find_existing_item(title, item_type, telegram_id)
 
     if existing:
+        # Don't demote a finished/abandoned item back to want
+        if existing.get("status") in ("done", "abandoned") and status == "want":
+            existing_title = existing.get("title", title)
+            if lang == "ru":
+                await update.message.reply_text(f"*{existing_title}* уже у тебя в библиотеке как завершённое. Хочешь добавить заметку?", parse_mode="Markdown")
+            else:
+                await update.message.reply_text(f"*{existing_title}* is already in your library as finished. Want to add a note?", parse_mode="Markdown")
+            return
+
         update_data = {"status": status, "raw_messages": (existing.get("raw_messages") or []) + [text]}
         if status == "in_progress" and not existing.get("started_at"):
             from datetime import date
@@ -196,6 +281,41 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         item_id = existing["id"]
         action = "updated"
     else:
+        # For films/shows: fetch TMDB candidates and let user pick
+        if item_type in ("film", "show"):
+            candidates = await metadata.fetch_tmdb_candidates(title, item_type, lang=lang)
+            # Sort candidates: most recent year first
+            candidates.sort(key=lambda c: c.get("year") or 0, reverse=True)
+            # If only 1 candidate but its title looks nothing like what was typed → also show picker
+            if len(candidates) == 1 and not _titles_match(title, candidates[0]["title"]):
+                candidates = candidates  # keep as 1-item list, falls through to picker below
+            if len(candidates) >= 2 or (len(candidates) == 1 and not _titles_match(title, candidates[0]["title"])):
+                context.bot_data[f"pending_{telegram_id}"] = {
+                    "parsed": parsed,
+                    "item_type": item_type,
+                    "status": status,
+                    "subtype": subtype,
+                    "text": text,
+                    "candidates": candidates,
+                    "lang": lang,
+                }
+                keyboard = [
+                    [InlineKeyboardButton(
+                        f"{c['title']} ({c['year'] or '?'})",
+                        callback_data=f"pick_media:{telegram_id}:{i}"
+                    )]
+                    for i, c in enumerate(candidates)
+                ]
+                none_label = "Ничего из этого — сохранить как есть" if lang == "ru" else "None of these — save as typed"
+                prompt = f"Нашёл несколько вариантов для *{title}* — какой?" if lang == "ru" else f"Found a few matches for *{title}* — which one?"
+                keyboard.append([InlineKeyboardButton(none_label, callback_data=f"pick_media:{telegram_id}:none")])
+                await update.message.reply_text(
+                    prompt,
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown"
+                )
+                return
+
         from datetime import date
         today = date.today().isoformat()
         item_data = {
@@ -222,7 +342,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _fetch_and_update_metadata(item_id, title, item_type, parsed.get("source_url"))
     )
 
-    await _send_confirmation(update, item, action, status)
+    await _send_confirmation(update, item, action, status, lang)
 
     already_reflected = existing and existing.get("feeling")
     if status in ("done", "abandoned") and not already_reflected:
@@ -377,19 +497,67 @@ async def _handle_add_note(update: Update, context: ContextTypes.DEFAULT_TYPE, t
         )
 
 
+def _split_ru_note(raw: str) -> tuple[str, str]:
+    """Split 'title: note' or 'title - note' or 'title note' into (title_query, note_text).
+    Returns (full_raw, '') when no separator found — caller does progressive search."""
+    import re as _re
+    m = _re.match(r'^(.+?)\s*[:\-–]\s*(.+)$', raw.strip(), _re.DOTALL)
+    if m:
+        return m.group(1).strip(), m.group(2).strip()
+    return raw.strip(), ""
+
+
+async def _handle_ru_note(update: Update, context: ContextTypes.DEFAULT_TYPE, raw: str, telegram_id: int, lang: str):
+    """Handle 'добавить к X [note]' — supports explicit separator or progressive title search."""
+    title_query, note_text = _split_ru_note(raw)
+
+    matches = database.find_items_fuzzy(title_query, telegram_id)
+
+    if not matches and not note_text:
+        # No separator found — try progressive search (trim words from end)
+        words = raw.split()
+        for split in range(len(words) - 1, 0, -1):
+            candidate = " ".join(words[:split])
+            matches = database.find_items_fuzzy(candidate, telegram_id)
+            if matches:
+                note_text = " ".join(words[split:]).strip()
+                title_query = candidate
+                break
+
+    if not matches:
+        msg = f"Не нашла ничего похожего на «{title_query}»." if lang == "ru" else f"Couldn't find anything matching \"{title_query}\"."
+        await update.message.reply_text(msg)
+        return
+
+    item = matches[0]
+    display_title = (item.get("title_ru") or item["title"]) if lang == "ru" else item["title"]
+
+    if note_text:
+        database.append_raw_message(item["id"], note_text)
+        msg = f"Заметка добавлена к *{display_title}*. Обновляю summary..." if lang == "ru" else f"Note added to *{display_title}*. Updating summary..."
+        await update.message.reply_text(msg, parse_mode="Markdown")
+        context.application.create_task(_regenerate_summary(update, item["id"]))
+    else:
+        context.bot_data[f"awaiting_note_{telegram_id}"] = item["id"]
+        msg = f"Что добавить к *{display_title}*?" if lang == "ru" else f"What note to add to *{display_title}*?"
+        await update.message.reply_text(msg, parse_mode="Markdown")
+
+
 async def _generate_summary_and_tags(item_id: str, title: str, messages: list[str]):
     """Generate summary + vibe tags from reflection messages. Called after Q2 is answered."""
     try:
         item = database.get_item(item_id)
         if not item:
             return
+        lang = _get_lang(item.get("telegram_id")) if item.get("telegram_id") else "en"
+        lang_name = "Russian" if lang == "ru" else "English"
         all_messages = list(item.get("raw_messages") or [])
-        highlights, plain = ai_parser.generate_summary(title, all_messages)
-        summary = json.dumps(highlights) if highlights else plain
+        highlights, plain = ai_parser.generate_summary(title, all_messages, lang=lang)
+        summary = json.dumps(highlights, ensure_ascii=False) if highlights else plain
         database.update_item(item_id, {"summary": summary})
         item["summary"] = summary
 
-        # Generate vibe tags
+        # Generate vibe tags in user's language
         import anthropic as anth, os as _os
         _client = anth.Anthropic(api_key=_os.getenv("ANTHROPIC_API_KEY"))
         response = _client.messages.create(
@@ -397,25 +565,34 @@ async def _generate_summary_and_tags(item_id: str, title: str, messages: list[st
             max_tokens=100,
             messages=[{"role": "user", "content": f"""Based on this reflection about "{title}": {summary}
 
-Generate 2-4 vibe tags as a JSON array.
+Generate 2-4 vibe tags as a JSON array. Reply in {lang_name}.
 
 Mix two types:
 1. Tone/feel of the content (e.g. dark, funny, slow burn, intense, cozy, disturbing) — infer from what you know about it if not mentioned
-2. Emotional experience from their words (e.g. "first seasons only", "consistently good", "lost the plot", "couldn't stop", "left me cold", "mind-blowing") — only from what they actually said
+2. Emotional experience from their words — only from what they actually said
 
 Rules:
-- 2-4 tags total, no overlap or repetition between them
-- Each tag should say something different
-- Short, lowercase, no quotes inside
-- If experience and tone would overlap, drop the redundant one
-
-JSON only, no markdown fences."""}]
+- 2-4 tags total, no overlap
+- Short, lowercase
+- JSON only, no markdown fences."""}]
         )
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         tags = json.loads(raw)
         database.update_item(item_id, {"vibe_tags": tags})
+
+        # For RU users: copy to _ru columns (no translation needed — content is already in RU)
+        if lang == "ru":
+            ru_copy: dict = {}
+            if highlights:
+                ru_copy["highlights_ru"] = highlights
+            if summary:
+                ru_copy["summary_ru"] = summary
+            if tags:
+                ru_copy["vibe_tags_ru"] = tags
+            if ru_copy:
+                database.update_item(item_id, ru_copy)
     except Exception:
         pass
 
@@ -439,11 +616,12 @@ async def _regenerate_summary(update: Update, item_id: str):
         item = database.get_item(item_id)
         if not item:
             return
+        lang = _get_lang(item.get("telegram_id")) if item.get("telegram_id") else "en"
         raw = item.get("raw_messages") or []
         if not raw:
             return
-        highlights, plain = ai_parser.generate_summary(item["title"], raw)
-        database.update_item(item_id, {"summary": json.dumps(highlights) if highlights else plain})
+        highlights, plain = ai_parser.generate_summary(item["title"], raw, lang=lang)
+        database.update_item(item_id, {"summary": json.dumps(highlights, ensure_ascii=False) if highlights else plain})
         await update.message.reply_text(
             f"✓ Summary updated for *{item['title']}*.",
             parse_mode="Markdown"
@@ -460,23 +638,43 @@ async def _send_reflection_question(update: Update, telegram_id: int, item_id: s
         pass
 
 
-async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, source_url: str | None = None):
+async def _send_reflection_question_from_callback(query, telegram_id: int, item_id: str, title: str, item_type: str, messages: list[str], lang: str = "en"):
     try:
-        data = await metadata.fetch_metadata(title, item_type, source_url)
-        if data:
-            data.pop("title", None)
-            database.update_item(item_id, data)
+        question = ai_parser.get_reflection_question(title, item_type, messages, question_number=1, lang=lang)
+        await query.message.reply_text(question)
     except Exception:
         pass
 
 
-async def _send_confirmation(update: Update, item: dict, action: str, status: str):
-    status_labels = {
-        "want": "Added to Want List",
-        "in_progress": "Currently reading/watching",
-        "done": "Marked as done",
-        "abandoned": "Marked as abandoned",
-    }
+async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None):
+    try:
+        data = await metadata.fetch_metadata(title, item_type, source_url, tmdb_id=tmdb_id)
+        if data:
+            data.pop("title", None)
+            database.update_item(item_id, data)
+        elif item_type == "book":
+            # No metadata found for book — delete the item rather than keep an empty entry
+            database.delete_item(item_id)
+    except Exception:
+        pass
+
+
+async def _send_confirmation(update: Update, item: dict, action: str, status: str, lang: str = "en"):
+    import os as _os
+    if lang == "ru":
+        status_labels = {
+            "want": "Добавлено в список желаний",
+            "in_progress": "Сейчас читаю/смотрю",
+            "done": "Отмечено как завершённое",
+            "abandoned": "Отмечено как брошенное",
+        }
+    else:
+        status_labels = {
+            "want": "Added to Want List",
+            "in_progress": "Currently reading/watching",
+            "done": "Marked as done",
+            "abandoned": "Marked as abandoned",
+        }
     type_emoji = {"book": "📚", "film": "🎬", "show": "📺", "other": "✦"}
 
     emoji = type_emoji.get(item.get("type"), "✦")
@@ -489,19 +687,28 @@ async def _send_confirmation(update: Update, item: dict, action: str, status: st
         msg += f" ({item['year']})"
     msg += f"\n_{label}_"
 
+    # Append app link only for want-list additions
+    if status == "want":
+        tid = item.get("telegram_id")
+        app_base = _os.getenv("APP_URL", "").rstrip("/")
+        if tid and app_base:
+            url = f"{app_base}?user={tid}"
+            link_text = "Открыть список" if lang == "ru" else "Open Want List"
+            msg += f"\n[{link_text}]({url})"
+
     await update.message.reply_text(msg, parse_mode="Markdown")
 
 
 async def _ask_feeling(update: Update, telegram_id: int, item_id: str):
+    lang = _get_lang(telegram_id)
+    labels = _feeling_labels(lang)
     keyboard = [
         [InlineKeyboardButton(label, callback_data=f"feeling:{item_id}:{key}")]
-        for key, label in FEELING_LABELS.items()
+        for key, label in labels.items()
     ]
     database.set_session_state(telegram_id, "awaiting_feeling", item_id)
-    await update.message.reply_text(
-        "Last step — how would you sum it up?",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+    prompt = "Последний шаг — как бы ты это описал(а)?" if lang == "ru" else "Last step — how would you sum it up?"
+    await update.message.reply_text(prompt, reply_markup=InlineKeyboardMarkup(keyboard))
 
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -516,13 +723,17 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Map legacy values from old cached Telegram buttons
         feeling = {"good": "average", "fine": "average"}.get(feeling, feeling)
         database.update_item(item_id, {"feeling": feeling})
+        lang = _get_lang(telegram_id)
+        labels = _feeling_labels(lang)
+        revisit_labels = _revisit_labels(lang)
         keyboard = [[
             InlineKeyboardButton(label, callback_data=f"revisit:{item_id}:{key}")
-            for key, label in REVISIT_LABELS.items()
+            for key, label in revisit_labels.items()
         ]]
         database.set_session_state(telegram_id, "awaiting_feeling", item_id)
+        revisit_q = "Пересмотришь/перечитаешь?" if lang == "ru" else "Would you revisit it?"
         await query.edit_message_text(
-            f"{FEELING_LABELS[feeling]} — noted!\n\nWould you revisit it?",
+            f"{labels.get(feeling, feeling)} — записал!\n\n{revisit_q}",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -531,9 +742,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, item_id, revisit = data.split(":")
         database.update_item(item_id, {"would_revisit": revisit})
         database.set_session_state(telegram_id, "awaiting_quote", item_id)
-        await query.edit_message_text(
-            f"{REVISIT_LABELS[revisit]}!\n\nAny quote or line that stuck with you? (or send . to skip)"
-        )
+        lang = _get_lang(telegram_id)
+        revisit_labels = _revisit_labels(lang)
+        if lang == "ru":
+            quote_prompt = f"{revisit_labels.get(revisit, revisit)}!\n\nЕсть цитата или фраза, которая запомнилась? (или отправь . чтобы пропустить)"
+        else:
+            quote_prompt = f"{REVISIT_LABELS.get(revisit, revisit)}!\n\nAny quote or line that stuck with you? (or send . to skip)"
+        await query.edit_message_text(quote_prompt)
 
     # ── Confirm delete ──
     elif data.startswith("confirm_delete:"):
@@ -578,6 +793,107 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("suggest_dismiss:"):
         await query.edit_message_text("Got it, skipped.")
 
+    # ── Media disambiguation picker ──
+    elif data.startswith("pick_media:"):
+        _, tg_id_str, choice = data.split(":", 2)
+        tg_id = int(tg_id_str)
+
+        pending = context.bot_data.pop(f"pending_{tg_id}", None)
+        if not pending:
+            await query.edit_message_text("Session expired, please try again.")
+            return
+
+        parsed = pending["parsed"]
+        item_type = pending["item_type"]
+        status = pending["status"]
+        subtype = pending.get("subtype")
+        original_text = pending["text"]
+        candidates = pending["candidates"]
+        pick_lang = pending.get("lang", "en")
+
+        chosen = None
+        if choice != "none" and choice.isdigit():
+            idx = int(choice)
+            if 0 <= idx < len(candidates):
+                chosen = candidates[idx]
+
+        final_title = chosen["title"] if chosen else parsed["title"]
+
+        from datetime import date
+        today = date.today().isoformat()
+        item_data = {
+            "type": item_type,
+            "title": final_title,
+            "creator": parsed.get("creator"),
+            "status": status,
+            "raw_messages": [original_text],
+            "source_url": parsed.get("source_url"),
+            "telegram_id": tg_id,
+        }
+        if subtype:
+            item_data["subtype"] = subtype
+        if status == "in_progress":
+            item_data["started_at"] = today
+        if status == "done":
+            item_data["finished_at"] = today
+
+        existing = database.find_existing_item(final_title, item_type, tg_id)
+        if existing:
+            # Don't demote a finished/abandoned item back to want
+            if existing.get("status") in ("done", "abandoned") and status == "want":
+                existing_title = existing.get("title", final_title)
+                if pick_lang == "ru":
+                    await query.edit_message_text(f"*{existing_title}* уже у тебя в библиотеке как завершённое. Хочешь добавить заметку?", parse_mode="Markdown")
+                else:
+                    await query.edit_message_text(f"*{existing_title}* is already in your library as finished. Want to add a note?", parse_mode="Markdown")
+                return
+            item_id = existing["id"]
+            update_data = {k: v for k, v in item_data.items() if k not in ("type", "title", "telegram_id")}
+            if original_text not in (existing.get("raw_messages") or []):
+                update_data["raw_messages"] = (existing.get("raw_messages") or []) + [original_text]
+            database.update_item(item_id, update_data)
+            item = existing
+        else:
+            item = database.save_item(item_data)
+            item_id = item["id"]
+
+        chosen_tmdb_id = chosen["tmdb_id"] if chosen else None
+        context.application.create_task(
+            _fetch_and_update_metadata(item_id, final_title, item_type, parsed.get("source_url"), tmdb_id=chosen_tmdb_id)
+        )
+
+        type_emoji = {"book": "📚", "film": "🎬", "show": "📺", "other": "✦"}
+        emoji = type_emoji.get(item_type, "✦")
+        year_str = f" ({chosen['year']})" if chosen and chosen.get("year") else ""
+        if pick_lang == "ru":
+            status_labels = {
+                "want": "Добавлено в список желаний",
+                "in_progress": "Сейчас смотрю/читаю",
+                "done": "Отмечено как завершённое",
+                "abandoned": "Отмечено как брошенное",
+            }
+        else:
+            status_labels = {
+                "want": "Added to Want List",
+                "in_progress": "Currently watching/reading",
+                "done": "Marked as done",
+                "abandoned": "Marked as abandoned",
+            }
+        await query.edit_message_text(
+            f"{emoji} *{final_title}*{year_str}\n_{status_labels.get(status, 'Saved')}_",
+            parse_mode="Markdown"
+        )
+
+        if status in ("done", "abandoned"):
+            initial_messages = [original_text]
+            database.set_session_state(tg_id, "reflecting", item_id, {
+                "reflection_count": 0,
+                "reflection_messages": initial_messages,
+            })
+            context.application.create_task(
+                _send_reflection_question_from_callback(query, tg_id, item_id, final_title, item_type, initial_messages, pick_lang)
+            )
+
 
 async def _finish_entry(update: Update, context: ContextTypes.DEFAULT_TYPE, telegram_id: int, item_id: str):
     database.set_session_state(telegram_id, "idle")
@@ -585,10 +901,11 @@ async def _finish_entry(update: Update, context: ContextTypes.DEFAULT_TYPE, tele
     if not item:
         return
 
+    lang = _get_lang(telegram_id)
     raw = item.get("raw_messages") or []
     if raw:
-        highlights, plain = ai_parser.generate_summary(item["title"], raw)
-        summary_to_save = json.dumps(highlights) if highlights else plain
+        highlights, plain = ai_parser.generate_summary(item["title"], raw, lang=lang)
+        summary_to_save = json.dumps(highlights, ensure_ascii=False) if highlights else plain
         database.update_item(item_id, {"summary": summary_to_save})
         item["summary"] = summary_to_save
         item["highlights"] = highlights
@@ -621,6 +938,13 @@ async def _finish_entry(update: Update, context: ContextTypes.DEFAULT_TYPE, tele
     else:
         msg = f"{title_line}\n{meta_line}\n\n_Saved to your library._"
 
+    import os as _os
+    app_base = _os.getenv("APP_URL", "").rstrip("/")
+    if app_base:
+        url = f"{app_base}?user={telegram_id}"
+        link_text = "Открыть в Content Palace" if lang == "ru" else "View in Content Palace"
+        msg += f"\n\n[{link_text}]({url})"
+
     await update.message.reply_text(msg, parse_mode="Markdown")
 
     if item.get("summary"):
@@ -632,26 +956,26 @@ async def _generate_and_save_tags(item_id: str, item: dict):
     import json as _json
     import os
 
+    item_full = database.get_item(item_id)
+    user = database.get_user(item_full.get("telegram_id")) if item_full else None
+    lang = user.get("lang", "en") if user else "en"
+    lang_name = "Russian" if lang == "ru" else "English"
+
     _client = anth.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     response = _client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=100,
         messages=[{"role": "user", "content": f"""Based on this reflection about "{item['title']}": {item['summary']}
 
-Generate 2-4 vibe tags as a JSON array.
+Generate 2-4 vibe tags as a JSON array. Reply in {lang_name}.
 
 Mix two types:
-1. Tone/feel of the content (e.g. dark, funny, slow burn, intense, cozy, disturbing) — infer from what you know about it if not mentioned
-2. Emotional experience from their words (e.g. "first seasons only", "consistently good", "lost the plot", "couldn't stop", "left me cold", "mind-blowing") — only from what they actually said
+1. Tone/feel of the content (e.g. dark, funny, slow burn) — infer from what you know about it
+2. Emotional experience from their words — only from what they actually said
 
-Rules:
-- 2-4 tags total, no overlap or repetition between them
-- Each tag should say something different
-- Short, lowercase, no quotes inside
-- If experience and tone would overlap, drop the redundant one
-
-JSON only, no other text."""}]
+Rules: 2-4 tags, no overlap, short lowercase. JSON only, no markdown fences."""}]
     )
+    tags = []
     try:
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
@@ -659,6 +983,46 @@ JSON only, no other text."""}]
         tags = _json.loads(raw)
         database.update_item(item_id, {"vibe_tags": tags})
         item["vibe_tags"] = tags
+    except Exception:
+        pass
+
+    # Handle cross-language storage
+    try:
+        raw_summary = item_full.get("summary", "") if item_full else ""
+        try:
+            fresh_highlights = _json.loads(raw_summary) if raw_summary and raw_summary.startswith("[") else []
+        except Exception:
+            fresh_highlights = []
+
+        if lang == "ru":
+            # Content already in Russian — copy to _ru columns, translate to EN for base columns
+            ru_copy: dict = {}
+            if fresh_highlights:
+                ru_copy["highlights_ru"] = fresh_highlights
+            if raw_summary:
+                ru_copy["summary_ru"] = raw_summary
+            if tags:
+                ru_copy["vibe_tags_ru"] = tags
+            if ru_copy:
+                database.update_item(item_id, ru_copy)
+        else:
+            # Content in English — translate to Russian and save to _ru columns
+            translated = ai_parser.translate_content(
+                highlights=fresh_highlights,
+                summary=raw_summary,
+                vibe_tags=tags,
+                target_lang="ru",
+            )
+            if translated:
+                ru_update: dict = {}
+                if translated.get("highlights"):
+                    ru_update["highlights_ru"] = translated["highlights"]
+                if translated.get("summary"):
+                    ru_update["summary_ru"] = translated["summary"]
+                if translated.get("vibe_tags"):
+                    ru_update["vibe_tags_ru"] = translated["vibe_tags"]
+                if ru_update:
+                    database.update_item(item_id, ru_update)
     except Exception:
         pass
 
