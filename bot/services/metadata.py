@@ -11,6 +11,8 @@ TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 OL_BASE = "https://openlibrary.org"
 KP_TOKEN = os.getenv("KINOPOISK_API_KEY")
 KP_BASE = "https://api.poiskkino.dev"
+GB_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
+GB_BASE = "https://www.googleapis.com/books/v1/volumes"
 
 
 async def fetch_kp_candidates(title: str, limit: int = 3) -> list[dict]:
@@ -145,7 +147,7 @@ async def fetch_tmdb_candidates(title: str, item_type: str, limit: int = 3, lang
 async def fetch_metadata(title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None, lang: str = "en", kp_id: int | None = None) -> dict:
     """Fetch metadata for a given title and type. Returns enriched data dict."""
     if item_type == "book":
-        return await _fetch_book(title)
+        return await _fetch_book(title, lang=lang)
     elif item_type in ("film", "show"):
         if lang == "ru":
             return await fetch_kp_metadata(title, item_type, kp_id=kp_id)
@@ -383,13 +385,86 @@ async def _fetch_youtube(url: str, title: str) -> dict:
         return {}
 
 
-async def _fetch_book(title: str) -> dict:
-    async with httpx.AsyncClient() as http:
-        resp = await http.get(
-            f"{OL_BASE}/search.json",
-            params={"title": title, "limit": 1, "fields": "key,title,author_name,first_publish_year,cover_i,subject"}
-        )
-        data = resp.json()
+async def _fetch_google_books(title: str, lang_restrict: str | None = None) -> dict:
+    """Fetch book metadata from Google Books API."""
+    try:
+        params: dict = {
+            "q": f"intitle:{title}",
+            "maxResults": 1,
+            "fields": "items/volumeInfo(title,authors,publishedDate,description,imageLinks,categories,industryIdentifiers)",
+        }
+        if GB_KEY:
+            params["key"] = GB_KEY
+        if lang_restrict:
+            params["langRestrict"] = lang_restrict
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(GB_BASE, params=params, timeout=8)
+            items = resp.json().get("items", [])
+        if not items:
+            return {}
+        info = items[0].get("volumeInfo", {})
+        cover_url = (info.get("imageLinks") or {}).get("thumbnail")
+        # Upgrade thumbnail to larger image
+        if cover_url:
+            cover_url = cover_url.replace("zoom=1", "zoom=3").replace("&edge=curl", "")
+        authors = info.get("authors", [])
+        raw_date = info.get("publishedDate", "")
+        year = int(raw_date[:4]) if raw_date and raw_date[:4].isdigit() else None
+        categories = info.get("categories", [])
+        return {
+            "external_source": "google_books",
+            "title": info.get("title", title),
+            "creator": authors[0] if authors else None,
+            "year": year,
+            "description": (info.get("description") or "")[:500] or None,
+            "cover_url": cover_url,
+            "genres": [c.lower() for c in categories[:5]],
+        }
+    except Exception:
+        return {}
+
+
+async def _fetch_book(title: str, lang: str = "en") -> dict:
+    if lang == "ru":
+        # For Russian users: try Google Books with Russian language restrict first
+        result = await _fetch_google_books(title, lang_restrict="ru")
+        if result and result.get("title"):
+            # Try to also get an English title via a second GB call (no lang restrict)
+            en_result = await _fetch_google_books(title)
+            return {
+                **result,
+                "title": en_result.get("title") or result["title"],  # English canonical
+                "title_ru": result["title"] if result["title"] != (en_result.get("title") or result["title"]) else None,
+                "description_ru": result.get("description"),
+                "description": en_result.get("description") or result.get("description"),
+                "cover_url": result.get("cover_url") or en_result.get("cover_url"),
+            }
+        # Fall back to OpenLibrary if GB found nothing
+        return await _fetch_book_openlibrary(title)
+
+    # EN users: OpenLibrary first, Google Books for description fallback
+    result = await _fetch_book_openlibrary(title)
+    if not result.get("description"):
+        gb = await _fetch_google_books(title)
+        if gb.get("description"):
+            result["description"] = gb["description"]
+        if not result.get("cover_url") and gb.get("cover_url"):
+            result["cover_url"] = gb["cover_url"]
+    return result
+
+
+async def _fetch_book_openlibrary(title: str) -> dict:
+    """Fetch book metadata from OpenLibrary."""
+    try:
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(
+                f"{OL_BASE}/search.json",
+                params={"title": title, "limit": 1, "fields": "key,title,author_name,first_publish_year,cover_i,subject"},
+                timeout=8,
+            )
+            data = resp.json()
+    except Exception:
+        return {}
 
     results = data.get("docs", [])
     if not results:
@@ -401,7 +476,6 @@ async def _fetch_book(title: str) -> dict:
     authors = top.get("author_name", [])
     subjects = top.get("subject", [])[:5]
 
-    # Fetch description — try OpenLibrary work record first, fall back to Google Books
     description = None
     work_key = top.get("key")
     if work_key:
@@ -416,22 +490,6 @@ async def _fetch_book(title: str) -> dict:
                     description = raw_desc
                 if description:
                     description = description[:500]
-        except Exception:
-            pass
-
-    if not description:
-        try:
-            async with httpx.AsyncClient() as http:
-                gb_resp = await http.get(
-                    "https://www.googleapis.com/books/v1/volumes",
-                    params={"q": f"intitle:{title}", "maxResults": 1, "fields": "items/volumeInfo/description"},
-                    timeout=5
-                )
-                gb_items = gb_resp.json().get("items", [])
-                if gb_items:
-                    raw = gb_items[0].get("volumeInfo", {}).get("description", "")
-                    if raw:
-                        description = raw[:500]
         except Exception:
             pass
 
