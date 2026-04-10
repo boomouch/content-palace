@@ -722,7 +722,11 @@ async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, s
     try:
         data = await metadata.fetch_metadata(title, item_type, source_url, tmdb_id=tmdb_id, lang=lang, kp_id=kp_id)
         if data:
-            data.pop("title", None)
+            # For RU entries: allow title update so English canonical gets stored
+            # (KP metadata resolves English via TMDB fallback)
+            # For EN entries: don't overwrite title (it's already correct from parser)
+            if lang != "ru":
+                data.pop("title", None)
             database.update_item(item_id, data)
         elif item_type == "book":
             # No metadata found for book — delete the item rather than keep an empty entry
