@@ -85,12 +85,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if lang == "ru":
             await update.message.reply_text(
                 f"👋 Снова привет\! Напиши что смотришь или читаешь\.\n\n📱 [Content Palace]({url})",
-                parse_mode="MarkdownV2"
+                parse_mode="MarkdownV2",
+                disable_web_page_preview=True,
             )
         else:
             await update.message.reply_text(
                 f"👋 Welcome back\! Tell me what you're watching or reading\.\n\n📱 [Content Palace]({url})",
-                parse_mode="MarkdownV2"
+                parse_mode="MarkdownV2",
+                disable_web_page_preview=True,
             )
         return
 
@@ -110,7 +112,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = update.effective_user.id
     user = get_user(telegram_id)
     lang = user.get("lang", "en") if user else "en"
-    await update.message.reply_text(_help_text(lang, telegram_id), parse_mode="MarkdownV2")
+    await update.message.reply_text(_help_text(lang, telegram_id), parse_mode="MarkdownV2", disable_web_page_preview=True)
 
 
 async def lang_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -148,7 +150,7 @@ async def handle_set_lang(update: Update, context: ContextTypes.DEFAULT_TYPE):
         get_or_create_user(telegram_id, name, lang)
 
     welcome = _help_text(lang, telegram_id)
-    await query.edit_message_text(welcome, parse_mode="MarkdownV2")
+    await query.edit_message_text(welcome, parse_mode="MarkdownV2", disable_web_page_preview=True)
 
 
 def main():
