@@ -71,7 +71,7 @@ async def fetch_kp_metadata(title: str, item_type: str, kp_id: int | None = None
             None
         )
 
-        genres = [g["name"].lower() for g in (r.get("genres") or []) if g.get("name")]
+        genres_ru = [g["name"].lower() for g in (r.get("genres") or []) if g.get("name")]
 
         name_ru = r.get("name")  # Russian title (primary on Kinopoisk)
         name_en = r.get("enName") or r.get("alternativeName")
@@ -79,7 +79,7 @@ async def fetch_kp_metadata(title: str, item_type: str, kp_id: int | None = None
         # Fetch English title, description, and genres from TMDB using KP's embedded TMDB ID
         tmdb_id_from_kp = (r.get("externalId") or {}).get("tmdb")
         description_en = None
-        genres_en = genres  # fallback to KP genres if TMDB unavailable
+        genres_en: list = []  # stay empty if TMDB unavailable — don't store Russian in EN field
         if tmdb_id_from_kp:
             endpoint_tmdb = "tv" if r.get("isSeries") else "movie"
             title_key_tmdb = "name" if r.get("isSeries") else "title"
@@ -95,7 +95,7 @@ async def fetch_kp_metadata(title: str, item_type: str, kp_id: int | None = None
                 if not name_en:
                     name_en = tmdb_data.get(title_key_tmdb) or None
                 description_en = tmdb_data.get("overview") or None
-                genres_en = [g["name"].lower() for g in tmdb_data.get("genres", [])] or genres
+                genres_en = [g["name"].lower() for g in tmdb_data.get("genres", [])]
             except Exception:
                 pass
 
@@ -103,17 +103,16 @@ async def fetch_kp_metadata(title: str, item_type: str, kp_id: int | None = None
             "external_id": str(kp_id),
             "external_source": "kinopoisk",
             "title": name_en or name_ru or title,  # English canonical
+            "title_ru": name_ru,                    # ALWAYS set Russian title
             "creator": director,
             "year": r.get("year"),
-            "description": description_en,           # English from TMDB
+            "description": description_en,           # English from TMDB (None if TMDB unavailable)
             "description_ru": r.get("description") or r.get("shortDescription"),  # Russian from KP
             "cover_url": (r.get("poster") or {}).get("url"),
-            "genres": genres_en,                     # English from TMDB
-            "genres_ru": genres,                     # Russian from KP
+            "genres": genres_en or [],               # English from TMDB (empty if unavailable)
+            "genres_ru": genres_ru,                  # Russian from KP
             "metadata_raw": r,
         }
-        if name_ru and name_ru != result["title"]:
-            result["title_ru"] = name_ru
         return result
     except Exception:
         return {}
@@ -408,6 +407,14 @@ async def _fetch_youtube(url: str, title: str) -> dict:
         return {}
 
 
+def _is_cyrillic(s: str) -> bool:
+    """Return True if string is predominantly Cyrillic (i.e. Russian text)."""
+    if not s:
+        return False
+    cyrillic = sum(1 for c in s if '\u0400' <= c <= '\u04FF')
+    return cyrillic / len(s) > 0.3
+
+
 async def _fetch_google_books(title: str, author: str | None = None, lang_restrict: str | None = None) -> dict:
     """Fetch book metadata from Google Books API. Uses intitle: for precision."""
     try:
@@ -455,32 +462,42 @@ async def _fetch_book(title: str, lang: str = "en") -> dict:
         # Step 1: find the Russian edition to get author + Russian metadata
         gb_ru = await _fetch_google_books(title, lang_restrict="ru")
         author = gb_ru.get("creator")
+        title_ru = gb_ru.get("title") or title
 
-        # Step 2: find English edition using same title + author for precision
+        # Step 2: search for English edition in parallel — OL often has English titles for translated works
         gb_en, ol = await asyncio.gather(
-            _fetch_google_books(title, author=author),
+            _fetch_google_books(title, author=author, lang_restrict="en"),
             _fetch_book_openlibrary(title),
         )
 
-        # English canonical title: prefer GB-EN, fall back to OL, then GB-RU
+        # If GB-EN returned a Cyrillic/Russian title or same as Russian title,
+        # it found the same Russian book — discard it, no English edition on GB
+        gb_en_title = gb_en.get("title", "")
+        if _is_cyrillic(gb_en_title) or gb_en_title.lower() == title_ru.lower():
+            gb_en = {}
+
+        # OL may return English title for Russian classics (e.g. "Братья Карамазовы" → "The Brothers Karamazov")
+        ol_title = ol.get("title", "")
+        if _is_cyrillic(ol_title):
+            ol = {}  # OL returned Russian — not useful as English source
+
         title_en = gb_en.get("title") or ol.get("title")
-        title_ru = gb_ru.get("title")
 
         result: dict = {
             "external_id": ol.get("external_id"),
             "external_source": "google_books",
-            "title": title_en or title_ru or title,          # English canonical
+            "title": title_en or title_ru,              # English if found, else Russian
+            "title_ru": title_ru,                        # ALWAYS set for toggle to work
             "creator": author or ol.get("creator"),
             "year": gb_en.get("year") or gb_ru.get("year") or ol.get("year"),
             "cover_url": gb_en.get("cover_url") or gb_ru.get("cover_url") or ol.get("cover_url"),
-            "description": gb_en.get("description") or ol.get("description"),  # English
-            "description_ru": gb_ru.get("description"),                         # Russian
-            "genres": ol.get("genres") or gb_en.get("genres") or [],           # English
-            "genres_ru": gb_ru.get("genres") or [],                             # Russian
+            "description": gb_en.get("description") or ol.get("description"),  # English only
+            "description_ru": gb_ru.get("description"),                         # Russian only
+            "genres": ol.get("genres") or gb_en.get("genres") or [],            # English
+            "genres_ru": gb_ru.get("genres") or [],                              # Russian
             "metadata_raw": ol.get("metadata_raw"),
         }
-        if title_ru and title_ru != result["title"]:
-            result["title_ru"] = title_ru
+        # If title_en matched title_ru (same text), keep title_ru anyway for explicit RU toggle
         return {k: v for k, v in result.items() if v is not None and v != []}
 
     # EN users: OL + GB in parallel, merge
