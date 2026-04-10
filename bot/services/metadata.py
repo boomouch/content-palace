@@ -75,6 +75,26 @@ async def fetch_kp_metadata(title: str, item_type: str, kp_id: int | None = None
 
         name_ru = r.get("name")  # Russian title (primary on Kinopoisk)
         name_en = r.get("enName") or r.get("alternativeName")
+
+        # If no English name, try TMDB using the embedded TMDB ID from KP — direct fetch, no search
+        if not name_en:
+            tmdb_id_from_kp = (r.get("externalId") or {}).get("tmdb")
+            if tmdb_id_from_kp:
+                endpoint_tmdb = "tv" if r.get("isSeries") else "movie"
+                title_key_tmdb = "name" if r.get("isSeries") else "title"
+                try:
+                    async with httpx.AsyncClient() as http:
+                        tmdb_resp = await http.get(
+                            f"{TMDB_BASE}/{endpoint_tmdb}/{tmdb_id_from_kp}",
+                            headers={"Authorization": f"Bearer {TMDB_TOKEN}"},
+                            params={"language": "en-US"},
+                            timeout=5,
+                        )
+                        tmdb_data = tmdb_resp.json()
+                    name_en = tmdb_data.get(title_key_tmdb) or None
+                except Exception:
+                    pass
+
         result = {
             "external_id": str(kp_id),
             "external_source": "kinopoisk",
