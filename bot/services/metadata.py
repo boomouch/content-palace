@@ -9,10 +9,94 @@ TMDB_TOKEN = os.getenv("TMDB_READ_TOKEN")
 TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 OL_BASE = "https://openlibrary.org"
+KP_TOKEN = os.getenv("KINOPOISK_API_KEY")
+KP_BASE = "https://api.poiskkino.dev"
 
 
-async def fetch_tmdb_candidates(title: str, item_type: str, limit: int = 3, lang: str = "en") -> list[dict]:
-    """Return top TMDB results for disambiguation. Strips trailing year from title before searching."""
+async def fetch_kp_candidates(title: str, limit: int = 3) -> list[dict]:
+    """Search Kinopoisk (poiskkino.dev) by title. Returns top results for disambiguation."""
+    if not KP_TOKEN:
+        return []
+    try:
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(
+                f"{KP_BASE}/v1.4/movie/search",
+                headers={"X-API-KEY": KP_TOKEN},
+                params={"query": title, "limit": limit, "page": 1},
+                timeout=8,
+            )
+            docs = resp.json().get("docs", [])
+        candidates = []
+        for r in docs:
+            candidates.append({
+                "kp_id": r["id"],
+                "title": r.get("name") or r.get("alternativeName") or r.get("enName") or title,
+                "title_en": r.get("enName") or r.get("alternativeName"),
+                "year": r.get("year"),
+                "is_series": r.get("isSeries", False),
+            })
+        return candidates
+    except Exception:
+        return []
+
+
+async def fetch_kp_metadata(title: str, item_type: str, kp_id: int | None = None) -> dict:
+    """Fetch full metadata from Kinopoisk for a film or show."""
+    if not KP_TOKEN:
+        return {}
+    try:
+        if not kp_id:
+            candidates = await fetch_kp_candidates(title, limit=1)
+            if not candidates:
+                return {}
+            kp_id = candidates[0]["kp_id"]
+
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(
+                f"{KP_BASE}/v1.4/movie/{kp_id}",
+                headers={"X-API-KEY": KP_TOKEN},
+                timeout=8,
+            )
+            r = resp.json()
+
+        if not r.get("id"):
+            return {}
+
+        # Director: find person with enProfession == "director"
+        persons = r.get("persons") or []
+        director = next(
+            (p.get("name") or p.get("enName") for p in persons if p.get("enProfession") == "director"),
+            None
+        )
+
+        genres = [g["name"].lower() for g in (r.get("genres") or []) if g.get("name")]
+
+        name_ru = r.get("name")  # Russian title (primary on Kinopoisk)
+        name_en = r.get("enName") or r.get("alternativeName")
+        result = {
+            "external_id": str(kp_id),
+            "external_source": "kinopoisk",
+            "title": name_en or name_ru or title,  # English canonical for DB
+            "creator": director,
+            "year": r.get("year"),
+            "description": r.get("description") or r.get("shortDescription"),
+            "cover_url": (r.get("poster") or {}).get("url"),
+            "genres": genres,
+            "genres_ru": genres,  # KP genres are already in Russian
+            "metadata_raw": r,
+        }
+        if name_ru and name_ru != result["title"]:
+            result["title_ru"] = name_ru
+        if r.get("description"):
+            result["description_ru"] = r["description"]
+        return result
+    except Exception:
+        return {}
+
+
+async def fetch_tmdb_candidates(title: str, item_type: str, limit: int = 3, lang: str = "en", original_title: str | None = None) -> list[dict]:
+    """Return top TMDB results for disambiguation.
+    For RU users, searches with both the original RU title and the EN title to maximise coverage."""
     import re
     clean_title = re.sub(r'\s+\d{4}$', '', title.strip())
     endpoint = "movie" if item_type == "film" else "tv"
@@ -20,34 +104,51 @@ async def fetch_tmdb_candidates(title: str, item_type: str, limit: int = 3, lang
     date_key = "release_date" if item_type == "film" else "first_air_date"
     headers = {"Authorization": f"Bearer {TMDB_TOKEN}"}
     tmdb_lang = "ru-RU" if lang == "ru" else "en-US"
+
+    # Build list of search queries — for RU users try original Russian title first
+    queries = [clean_title]
+    if original_title and original_title.lower() != clean_title.lower():
+        orig_clean = re.sub(r'\s+\d{4}$', '', original_title.strip())
+        queries = [orig_clean, clean_title]  # Russian first, English fallback
+
     try:
-        async with httpx.AsyncClient() as http:
-            resp = await http.get(
-                f"{TMDB_BASE}/search/{endpoint}",
-                headers=headers,
-                params={"query": clean_title, "language": tmdb_lang, "page": 1},
-                timeout=8,
-            )
-            results = resp.json().get("results", [])
+        seen_ids: set = set()
         candidates = []
-        for r in results[:limit]:
-            raw_date = r.get(date_key, "")
-            year = int(raw_date[:4]) if raw_date else None
-            candidates.append({
-                "tmdb_id": r["id"],
-                "title": r.get(title_key, title),
-                "year": year,
-            })
+        async with httpx.AsyncClient() as http:
+            for query in queries:
+                resp = await http.get(
+                    f"{TMDB_BASE}/search/{endpoint}",
+                    headers=headers,
+                    params={"query": query, "language": tmdb_lang, "page": 1},
+                    timeout=8,
+                )
+                for r in resp.json().get("results", []):
+                    if r["id"] in seen_ids:
+                        continue
+                    seen_ids.add(r["id"])
+                    raw_date = r.get(date_key, "")
+                    year = int(raw_date[:4]) if raw_date else None
+                    candidates.append({
+                        "tmdb_id": r["id"],
+                        "title": r.get(title_key, title),
+                        "year": year,
+                    })
+                    if len(candidates) >= limit:
+                        break
+                if len(candidates) >= limit:
+                    break
         return candidates
     except Exception:
         return []
 
 
-async def fetch_metadata(title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None) -> dict:
+async def fetch_metadata(title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None, lang: str = "en", kp_id: int | None = None) -> dict:
     """Fetch metadata for a given title and type. Returns enriched data dict."""
     if item_type == "book":
         return await _fetch_book(title)
     elif item_type in ("film", "show"):
+        if lang == "ru":
+            return await fetch_kp_metadata(title, item_type, kp_id=kp_id)
         return await _fetch_tmdb(title, item_type, tmdb_id=tmdb_id)
     elif source_url and ("youtube.com" in source_url or "youtu.be" in source_url):
         return await _fetch_youtube(source_url, title)

@@ -243,8 +243,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Low confidence — ask for clarification
     if parsed.get("confidence") == "low":
-        clarification = parsed.get("ambiguity") or ai_parser.quick_reply("not_understood", lang)
-        await update.message.reply_text(clarification)
+        _low_title = parsed.get("title", "")
+        if lang == "ru":
+            clarification = f"Не поняла — уточни: _фильм {_low_title}_, _сериал {_low_title}_ или _книга {_low_title}_" if _low_title else "Не поняла — напиши, например: «посмотрела Дюну» или «читаю Сапиенс»"
+        else:
+            clarification = f"Not sure what to log — try: _film {_low_title}_, _show {_low_title}_ or _book {_low_title}_" if _low_title else "Not sure what you mean — try: \"watched Dune\" or \"reading Sapiens\""
+        await update.message.reply_text(clarification, parse_mode="Markdown")
         return
 
     title = parsed["title"]
@@ -281,14 +285,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         item_id = existing["id"]
         action = "updated"
     else:
-        # For films/shows: fetch TMDB candidates and let user pick
+        # For films/shows: fetch candidates and let user pick
         if item_type in ("film", "show"):
-            candidates = await metadata.fetch_tmdb_candidates(title, item_type, lang=lang)
+            if lang == "ru":
+                candidates = await metadata.fetch_kp_candidates(text, limit=3)
+            else:
+                candidates = await metadata.fetch_tmdb_candidates(title, item_type, lang=lang)
             # Sort candidates: most recent year first
             candidates.sort(key=lambda c: c.get("year") or 0, reverse=True)
-            # If only 1 candidate but its title looks nothing like what was typed → also show picker
-            if len(candidates) == 1 and not _titles_match(title, candidates[0]["title"]):
-                candidates = candidates  # keep as 1-item list, falls through to picker below
             if len(candidates) >= 2 or (len(candidates) == 1 and not _titles_match(title, candidates[0]["title"])):
                 context.bot_data[f"pending_{telegram_id}"] = {
                     "parsed": parsed,
@@ -306,9 +310,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )]
                     for i, c in enumerate(candidates)
                 ]
-                none_label = "Ничего из этого — сохранить как есть" if lang == "ru" else "None of these — save as typed"
-                prompt = f"Нашёл несколько вариантов для *{title}* — какой?" if lang == "ru" else f"Found a few matches for *{title}* — which one?"
-                keyboard.append([InlineKeyboardButton(none_label, callback_data=f"pick_media:{telegram_id}:none")])
+                if lang == "ru":
+                    none_label   = "Это не то — сохранить как введено"
+                    cancel_label = "❌ Отмена — не добавлять"
+                    prompt = f"Нашла несколько вариантов для *{title}* — какой?"
+                else:
+                    none_label   = "None of these — save as typed"
+                    cancel_label = "❌ Cancel — don't add"
+                    prompt = f"Found a few matches for *{title}* — which one?"
+                keyboard.append([InlineKeyboardButton(none_label,   callback_data=f"pick_media:{telegram_id}:none")])
+                keyboard.append([InlineKeyboardButton(cancel_label, callback_data=f"pick_media:{telegram_id}:cancel")])
                 await update.message.reply_text(
                     prompt,
                     reply_markup=InlineKeyboardMarkup(keyboard),
@@ -339,7 +350,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         action = "added"
 
     context.application.create_task(
-        _fetch_and_update_metadata(item_id, title, item_type, parsed.get("source_url"))
+        _fetch_and_update_metadata(item_id, title, item_type, parsed.get("source_url"), lang=lang)
     )
 
     await _send_confirmation(update, item, action, status, lang)
@@ -646,9 +657,9 @@ async def _send_reflection_question_from_callback(query, telegram_id: int, item_
         pass
 
 
-async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None):
+async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None, lang: str = "en", kp_id: int | None = None):
     try:
-        data = await metadata.fetch_metadata(title, item_type, source_url, tmdb_id=tmdb_id)
+        data = await metadata.fetch_metadata(title, item_type, source_url, tmdb_id=tmdb_id, lang=lang, kp_id=kp_id)
         if data:
             data.pop("title", None)
             database.update_item(item_id, data)
@@ -811,6 +822,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         candidates = pending["candidates"]
         pick_lang = pending.get("lang", "en")
 
+        if choice == "cancel":
+            msg = "Окей, не добавляю." if pick_lang == "ru" else "Got it, nothing added."
+            await query.edit_message_text(msg)
+            return
+
         chosen = None
         if choice != "none" and choice.isdigit():
             idx = int(choice)
@@ -857,9 +873,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             item = database.save_item(item_data)
             item_id = item["id"]
 
-        chosen_tmdb_id = chosen["tmdb_id"] if chosen else None
+        chosen_tmdb_id = chosen.get("tmdb_id") if chosen else None
+        chosen_kp_id = chosen.get("kp_id") if chosen else None
         context.application.create_task(
-            _fetch_and_update_metadata(item_id, final_title, item_type, parsed.get("source_url"), tmdb_id=chosen_tmdb_id)
+            _fetch_and_update_metadata(item_id, final_title, item_type, parsed.get("source_url"), tmdb_id=chosen_tmdb_id, lang=pick_lang, kp_id=chosen_kp_id)
         )
 
         type_emoji = {"book": "📚", "film": "🎬", "show": "📺", "other": "✦"}
