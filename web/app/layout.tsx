@@ -4,6 +4,10 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Content Palace',
   description: 'My personal library',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#1e150e"/>
+
+  <!-- Left tower -->
+  <rect x="80" y="180" width="90" height="230" fill="#c9922a"/>
+  <rect x="72" y="148" width="22" height="40" fill="#c9922a"/>
+  <rect x="106" y="148" width="22" height="40" fill="#c9922a"/>
+  <rect x="140" y="148" width="22" height="40" fill="#c9922a"/>
+
+  <!-- Right tower -->
+  <rect x="342" y="180" width="90" height="230" fill="#c9922a"/>
+  <rect x="334" y="148" width="22" height="40" fill="#c9922a"/>
+  <rect x="368" y="148" width="22" height="40" fill="#c9922a"/>
+  <rect x="402" y="148" width="22" height="40" fill="#c9922a"/>
+
+  <!-- Center wall -->
+  <rect x="170" y="220" width="172" height="190" fill="#c9922a"/>
+  <rect x="162" y="192" width="22" height="36" fill="#c9922a"/>
+  <rect x="196" y="192" width="22" height="36" fill="#c9922a"/>
+  <rect x="230" y="192" width="22" height="36" fill="#c9922a"/>
+  <rect x="264" y="192" width="22" height="36" fill="#c9922a"/>
+  <rect x="298" y="192" width="22" height="36" fill="#c9922a"/>
+  <rect x="328" y="192" width="22" height="36" fill="#c9922a"/>
+
+  <!-- Gate arch -->
+  <path d="M214 410 L214 320 Q256 280 298 320 L298 410 Z" fill="#1e150e"/>
+
+  <!-- Tower windows -->
+  <rect x="108" y="220" width="34" height="44" rx="17" fill="#1e150e"/>
+  <rect x="370" y="220" width="34" height="44" rx="17" fill="#1e150e"/>
+
+  <!-- Center window -->
+  <rect x="234" y="236" width="44" height="44" rx="6" fill="#1e150e"/>
+</svg>
