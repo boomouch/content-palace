@@ -100,6 +100,21 @@ _STATUS_MAP = {
 }
 
 
+_RU_INTENT_RE = re.compile(
+    r'^(?:хочу\s+(?:посмотреть|прочитать|послушать|посмотрим|почитать)\s+|'
+    r'(?:посмотрел[аи]?|прочитал[аи]?|послушал[аи]?)\s+|'
+    r'(?:смотрю|читаю|слушаю)\s+|'
+    r'(?:начал[аи]?\s+(?:смотреть|читать|слушать)\s+)|'
+    r'(?:закончил[аи]?\s+(?:смотреть|читать|слушать)?\s*)|'
+    r'(?:бросил[аи]?\s+(?:смотреть|читать)?\s*))',
+    re.IGNORECASE
+)
+
+def _extract_ru_title(text: str) -> str:
+    """Strip Russian intent phrases to get just the title."""
+    return _RU_INTENT_RE.sub("", text).strip()
+
+
 async def _show_kp_picker(update, context, candidates: list, parsed: dict, telegram_id: int, lang: str, text: str):
     """Show Kinopoisk disambiguation picker. Used as fallback when AI parser can't identify the title."""
     raw_status = parsed.get("status", "want")
@@ -271,20 +286,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # No media item detected — for RU users try KP search before giving up
     if not parsed.get("title"):
         if lang == "ru":
-            kp_fallback = await metadata.fetch_kp_candidates(text, limit=3)
-            if kp_fallback:
-                await _show_kp_picker(update, context, kp_fallback, parsed, telegram_id, lang, text)
-                return
+            kp_query = _extract_ru_title(text)
+            if kp_query:
+                kp_fallback = await metadata.fetch_kp_candidates(kp_query, limit=3)
+                if kp_fallback:
+                    await _show_kp_picker(update, context, kp_fallback, parsed, telegram_id, lang, text)
+                    return
         await update.message.reply_text(ai_parser.quick_reply("not_understood", lang))
         return
 
-    # Low confidence — for RU users try KP search first
+    # Low confidence — for RU users try KP search first using parsed title
     if parsed.get("confidence") == "low":
         if lang == "ru":
-            kp_fallback = await metadata.fetch_kp_candidates(text, limit=3)
-            if kp_fallback:
-                await _show_kp_picker(update, context, kp_fallback, parsed, telegram_id, lang, text)
-                return
+            kp_query = parsed.get("title") or _extract_ru_title(text)
+            if kp_query:
+                kp_fallback = await metadata.fetch_kp_candidates(kp_query, limit=3)
+                if kp_fallback:
+                    await _show_kp_picker(update, context, kp_fallback, parsed, telegram_id, lang, text)
+                    return
         _low_title = parsed.get("title", "")
         if lang == "ru":
             clarification = f"Не поняла — уточни: _фильм {_low_title}_, _сериал {_low_title}_ или _книга {_low_title}_" if _low_title else "Не поняла — напиши, например: «посмотрела Дюну» или «читаю Сапиенс»"
@@ -330,7 +349,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # For films/shows: fetch candidates and let user pick
         if item_type in ("film", "show"):
             if lang == "ru":
-                candidates = await metadata.fetch_kp_candidates(text, limit=3)
+                candidates = await metadata.fetch_kp_candidates(title, limit=3)
             else:
                 candidates = await metadata.fetch_tmdb_candidates(title, item_type, lang=lang)
             # Sort candidates: most recent year first
