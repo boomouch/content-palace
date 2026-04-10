@@ -349,7 +349,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # For films/shows: fetch candidates and let user pick
         if item_type in ("film", "show"):
             if lang == "ru":
-                candidates = await metadata.fetch_kp_candidates(title, limit=3)
+                all_candidates = await metadata.fetch_kp_candidates(title, limit=6)
+                # Filter by type: show → only series, film → only non-series
+                want_series = item_type == "show"
+                candidates = [c for c in all_candidates if c.get("is_series") == want_series]
+                # Fall back to unfiltered if nothing survived the filter
+                if not candidates:
+                    candidates = all_candidates
+                candidates = candidates[:3]
             else:
                 candidates = await metadata.fetch_tmdb_candidates(title, item_type, lang=lang)
             # Sort candidates: most recent year first
@@ -364,11 +371,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "candidates": candidates,
                     "lang": lang,
                 }
+                def _candidate_label(c: dict) -> str:
+                    label = c["title"]
+                    if c.get("year"):
+                        label += f" ({c['year']})"
+                    # Show type indicator for KP results (is_series field present)
+                    if "is_series" in c:
+                        label += " 📺" if c["is_series"] else " 🎬"
+                    return label
+
                 keyboard = [
-                    [InlineKeyboardButton(
-                        f"{c['title']} ({c['year'] or '?'})",
-                        callback_data=f"pick_media:{telegram_id}:{i}"
-                    )]
+                    [InlineKeyboardButton(_candidate_label(c), callback_data=f"pick_media:{telegram_id}:{i}")]
                     for i, c in enumerate(candidates)
                 ]
                 if lang == "ru":
