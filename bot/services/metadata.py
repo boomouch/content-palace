@@ -415,6 +415,18 @@ def _is_cyrillic(s: str) -> bool:
     return cyrillic / len(s) > 0.3
 
 
+def _is_bad_ol_title(s: str) -> bool:
+    """Detect transliterated or low-quality OpenLibrary titles that aren't real English."""
+    if not s:
+        return False
+    # Diacritics from Czech/Slovak/Polish transliterations (e.g. "Zaščita Lužina")
+    if any(c in s for c in 'šžčŠŽČāēīūñ'):
+        return True
+    # OL sometimes returns "Title (Russian Edition)" or similar junk
+    sl = s.lower()
+    return any(p in sl for p in ('russian edition', 'russian language', 'russian text', 'in russian'))
+
+
 async def _fetch_google_books(title: str, author: str | None = None, lang_restrict: str | None = None) -> dict:
     """Fetch book metadata from Google Books API. Uses intitle: for precision."""
     try:
@@ -478,8 +490,8 @@ async def _fetch_book(title: str, lang: str = "en") -> dict:
 
         # OL may return English title for Russian classics (e.g. "Братья Карамазовы" → "The Brothers Karamazov")
         ol_title = ol.get("title", "")
-        if _is_cyrillic(ol_title):
-            ol = {}  # OL returned Russian — not useful as English source
+        if _is_cyrillic(ol_title) or _is_bad_ol_title(ol_title):
+            ol = {}  # OL returned Russian or a transliteration — not useful as English source
 
         title_en = gb_en.get("title") or ol.get("title")
 

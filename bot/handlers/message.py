@@ -388,6 +388,37 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 return
 
+        # For RU books: search GB to find what will be saved and ask confirmation
+        if item_type == "book" and lang == "ru":
+            gb_preview = await metadata._fetch_google_books(title, lang_restrict="ru")
+            if gb_preview.get("title"):
+                found_title = gb_preview["title"]
+                found_author = gb_preview.get("creator")
+                found_year = gb_preview.get("year")
+                context.bot_data[f"pending_{telegram_id}"] = {
+                    "parsed": parsed,
+                    "item_type": item_type,
+                    "status": status,
+                    "text": text,
+                    "candidates": [{"title": found_title, "creator": found_author, "year": found_year}],
+                    "lang": lang,
+                }
+                display = f"*{found_title}*"
+                if found_author:
+                    display += f" — {found_author}"
+                if found_year:
+                    display += f" ({found_year})"
+                keyboard = [
+                    [InlineKeyboardButton("✓ Да, добавить", callback_data=f"pick_media:{telegram_id}:0")],
+                    [InlineKeyboardButton("❌ Отмена — не добавлять", callback_data=f"pick_media:{telegram_id}:cancel")],
+                ]
+                await update.message.reply_text(
+                    f"Нашла книгу: {display}\nДобавить?",
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown",
+                )
+                return
+
         from datetime import date
         today = date.today().isoformat()
         item_data = {
