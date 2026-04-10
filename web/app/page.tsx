@@ -19,6 +19,7 @@ const T = {
     featured_current: 'CURRENT', show_all: 'Show all', show_less: 'Show less',
     profile_empty: 'Your palace is empty', profile_empty_sub: 'Add something via Telegram to see your profile',
     profile_rate_hint: 'Rate at least 3 items via Telegram to unlock your taste profile.',
+    profile_update: 'Update', profile_updating: 'Updating...',
     thinking: 'Thinking...', type_book: 'Books', type_film: 'Films', type_show: 'Shows', type_other: 'Others',
     profile_your_taste: 'Your taste', profile_ratings: 'Ratings', profile_fav_genres: 'Favourite genres',
     profile_your_vibes: 'Your vibes', profile_creators: 'Creators you keep coming back to',
@@ -46,6 +47,7 @@ const T = {
     featured_current: 'СЕЙЧАС', show_all: 'Показать все', show_less: 'Свернуть',
     profile_empty: 'Дворец пустой', profile_empty_sub: 'Добавь что-нибудь через Telegram',
     profile_rate_hint: 'Оцени хотя бы 3 записи через Telegram чтобы открыть вкусовой профиль.',
+    profile_update: 'Обновить', profile_updating: 'Обновляю...',
     thinking: 'Думаю...', type_book: 'Книги', type_film: 'Фильмы', type_show: 'Сериалы', type_other: 'Прочее',
     profile_your_taste: 'Твой вкус', profile_ratings: 'Оценки', profile_fav_genres: 'Любимые жанры',
     profile_your_vibes: 'Твои вайбы', profile_creators: 'Авторы, к которым возвращаешься',
@@ -863,9 +865,8 @@ function ProfilePage({ items, lang }: { items: Item[], lang: 'en' | 'ru' }) {
   rated.forEach((item) => { if (item.creator) creatorMap[item.creator] = (creatorMap[item.creator] || 0) + 1 })
   const topCreators = Object.entries(creatorMap).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]).slice(0, 6)
 
-  useEffect(() => {
-    setTasteSummary(null)
-    if (rated.length < 3) return
+  function generateSummary() {
+    if (rated.length < 3 || summaryLoading) return
     setSummaryLoading(true)
     fetch('/api/taste-summary', {
       method: 'POST',
@@ -883,8 +884,7 @@ function ProfilePage({ items, lang }: { items: Item[], lang: 'en' | 'ru' }) {
       .then((r) => r.json())
       .then((d) => setTasteSummary(d.summary))
       .finally(() => setSummaryLoading(false))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items])
+  }
 
   const tx = T[lang]
   if (items.length === 0) {
@@ -902,11 +902,23 @@ function ProfilePage({ items, lang }: { items: Item[], lang: 'en' | 'ru' }) {
 
       {/* AI taste summary */}
       <div className="rounded-2xl p-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
-        <p className="text-xs uppercase tracking-widest mb-3 font-bold" style={{ color: 'var(--text2)' }}>{tx.profile_your_taste}</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs uppercase tracking-widest font-bold" style={{ color: 'var(--text2)' }}>{tx.profile_your_taste}</p>
+          {rated.length >= 3 && (
+            <button
+              onClick={generateSummary}
+              disabled={summaryLoading}
+              className="text-xs px-3 py-1 rounded-full transition-opacity"
+              style={{ background: 'var(--accent)', color: 'var(--bg)', opacity: summaryLoading ? 0.5 : 1 }}
+            >
+              {summaryLoading ? tx.profile_updating : tx.profile_update}
+            </button>
+          )}
+        </div>
         {summaryLoading ? (
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
-            <p className="text-sm" style={{ color: 'var(--text2)' }}>Thinking...</p>
+            <p className="text-sm" style={{ color: 'var(--text2)' }}>{tx.thinking}</p>
           </div>
         ) : tasteSummary ? (
           <p className="leading-relaxed italic" style={{ color: 'var(--text)', fontFamily: "'DM Serif Display', serif", fontSize: '1.05rem', textAlign: 'justify' }}>
@@ -914,7 +926,7 @@ function ProfilePage({ items, lang }: { items: Item[], lang: 'en' | 'ru' }) {
           </p>
         ) : (
           <p className="text-sm" style={{ color: 'var(--text2)' }}>
-            {tx.profile_rate_hint}
+            {rated.length >= 3 ? tx.profile_update + ' ↑' : tx.profile_rate_hint}
           </p>
         )}
       </div>
