@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from supabase import create_client
-from services.metadata import fetch_kp_metadata, _fetch_google_books
+from services.metadata import fetch_kp_metadata, _fetch_book
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SECRET_KEY")
@@ -65,21 +65,24 @@ async def backfill_film(item: dict) -> dict | None:
 
 async def backfill_book(item: dict) -> dict | None:
     title = item.get("title_ru") or item["title"]
-    gb_en, gb_ru = await asyncio.gather(
-        _fetch_google_books(title),
-        _fetch_google_books(title, lang_restrict="ru"),
-    )
+    data = await _fetch_book(title, lang="ru")
+    if not data:
+        return None
     update = {}
-    if gb_en.get("description"):
-        update["description"] = gb_en["description"]
-    if gb_en.get("genres"):
-        update["genres"] = gb_en["genres"]
-    if gb_en.get("cover_url") and not item.get("cover_url"):
-        update["cover_url"] = gb_en["cover_url"]
-    if gb_ru.get("description"):
-        update["description_ru"] = gb_ru["description"]
-    if gb_ru.get("genres"):
-        update["genres_ru"] = gb_ru["genres"]
+    if data.get("title"):
+        update["title"] = data["title"]
+    if data.get("title_ru"):
+        update["title_ru"] = data["title_ru"]
+    if data.get("description"):
+        update["description"] = data["description"]
+    if data.get("description_ru"):
+        update["description_ru"] = data["description_ru"]
+    if data.get("genres"):
+        update["genres"] = data["genres"]
+    if data.get("genres_ru"):
+        update["genres_ru"] = data["genres_ru"]
+    if data.get("cover_url") and not item.get("cover_url"):
+        update["cover_url"] = data["cover_url"]
     return update if update else None
 
 
