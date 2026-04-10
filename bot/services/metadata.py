@@ -427,6 +427,39 @@ def _is_bad_ol_title(s: str) -> bool:
     return any(p in sl for p in ('russian edition', 'russian language', 'russian text', 'in russian'))
 
 
+async def fetch_book_candidates(title: str, lang_restrict: str = "ru", limit: int = 3) -> list[dict]:
+    """Search Google Books and return multiple candidates for disambiguation."""
+    try:
+        params: dict = {
+            "q": title,  # plain query — better recall than intitle: for disambiguation
+            "maxResults": limit,
+            "fields": "items/volumeInfo(title,authors,publishedDate,imageLinks)",
+            "langRestrict": lang_restrict,
+        }
+        if GB_KEY:
+            params["key"] = GB_KEY
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(GB_BASE, params=params, timeout=8)
+            items = resp.json().get("items", [])
+        candidates = []
+        for item in items:
+            info = item.get("volumeInfo", {})
+            t = info.get("title", "")
+            if not t or not _is_cyrillic(t):
+                continue
+            authors = info.get("authors", [])
+            raw_date = info.get("publishedDate", "")
+            year = int(raw_date[:4]) if raw_date and raw_date[:4].isdigit() else None
+            candidates.append({
+                "title": t,
+                "creator": authors[0] if authors else None,
+                "year": year,
+            })
+        return candidates
+    except Exception:
+        return []
+
+
 async def _fetch_google_books(title: str, author: str | None = None, lang_restrict: str | None = None) -> dict:
     """Fetch book metadata from Google Books API. Uses intitle: for precision."""
     try:

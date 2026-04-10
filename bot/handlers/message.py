@@ -388,32 +388,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 return
 
-        # For RU books: search GB to find what will be saved and ask confirmation
+        # For RU books: search GB for candidates and show a picker (same as KP for films)
         if item_type == "book" and lang == "ru":
-            gb_preview = await metadata._fetch_google_books(title, lang_restrict="ru")
-            if gb_preview.get("title"):
-                found_title = gb_preview["title"]
-                found_author = gb_preview.get("creator")
-                found_year = gb_preview.get("year")
+            book_candidates = await metadata.fetch_book_candidates(title, lang_restrict="ru", limit=3)
+            if book_candidates:
                 context.bot_data[f"pending_{telegram_id}"] = {
                     "parsed": parsed,
                     "item_type": item_type,
                     "status": status,
                     "text": text,
-                    "candidates": [{"title": found_title, "creator": found_author, "year": found_year}],
+                    "candidates": book_candidates,
                     "lang": lang,
                 }
-                display = f"*{found_title}*"
-                if found_author:
-                    display += f" — {found_author}"
-                if found_year:
-                    display += f" ({found_year})"
                 keyboard = [
-                    [InlineKeyboardButton("✓ Да, добавить", callback_data=f"pick_media:{telegram_id}:0")],
-                    [InlineKeyboardButton("❌ Отмена — не добавлять", callback_data=f"pick_media:{telegram_id}:cancel")],
+                    [InlineKeyboardButton(
+                        f"{c['title']}{' — ' + c['creator'] if c.get('creator') else ''}{' (' + str(c['year']) + ')' if c.get('year') else ''}",
+                        callback_data=f"pick_media:{telegram_id}:{i}"
+                    )]
+                    for i, c in enumerate(book_candidates)
                 ]
+                keyboard.append([InlineKeyboardButton("Это не то — сохранить как введено", callback_data=f"pick_media:{telegram_id}:none")])
+                keyboard.append([InlineKeyboardButton("❌ Отмена — не добавлять", callback_data=f"pick_media:{telegram_id}:cancel")])
                 await update.message.reply_text(
-                    f"Нашла книгу: {display}\nДобавить?",
+                    f"Нашла несколько вариантов для *{title}* — какой?",
                     reply_markup=InlineKeyboardMarkup(keyboard),
                     parse_mode="Markdown",
                 )
