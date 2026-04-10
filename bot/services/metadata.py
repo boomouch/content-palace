@@ -385,13 +385,13 @@ async def _fetch_youtube(url: str, title: str) -> dict:
         return {}
 
 
-async def _fetch_google_books(title: str, lang_restrict: str | None = None) -> dict:
+async def _fetch_google_books(query: str, lang_restrict: str | None = None) -> dict:
     """Fetch book metadata from Google Books API."""
     try:
         params: dict = {
-            "q": f"intitle:{title}",
+            "q": query,  # plain query — broader match than intitle:
             "maxResults": 1,
-            "fields": "items/volumeInfo(title,authors,publishedDate,description,imageLinks,categories,industryIdentifiers)",
+            "fields": "items/volumeInfo(title,authors,publishedDate,description,imageLinks,categories)",
         }
         if GB_KEY:
             params["key"] = GB_KEY
@@ -404,19 +404,19 @@ async def _fetch_google_books(title: str, lang_restrict: str | None = None) -> d
             return {}
         info = items[0].get("volumeInfo", {})
         cover_url = (info.get("imageLinks") or {}).get("thumbnail")
-        # Upgrade thumbnail to larger image
         if cover_url:
             cover_url = cover_url.replace("zoom=1", "zoom=3").replace("&edge=curl", "")
         authors = info.get("authors", [])
         raw_date = info.get("publishedDate", "")
         year = int(raw_date[:4]) if raw_date and raw_date[:4].isdigit() else None
         categories = info.get("categories", [])
+        description = (info.get("description") or "").strip()
         return {
             "external_source": "google_books",
-            "title": info.get("title", title),
+            "title": info.get("title", query),
             "creator": authors[0] if authors else None,
             "year": year,
-            "description": (info.get("description") or "")[:500] or None,
+            "description": description[:500] if description else None,
             "cover_url": cover_url,
             "genres": [c.lower() for c in categories[:5]],
         }
@@ -425,32 +425,53 @@ async def _fetch_google_books(title: str, lang_restrict: str | None = None) -> d
 
 
 async def _fetch_book(title: str, lang: str = "en") -> dict:
+    """Fetch book metadata. Runs OL and GB in parallel, merges best results."""
     if lang == "ru":
-        # For Russian users: try Google Books with Russian language restrict first
-        result = await _fetch_google_books(title, lang_restrict="ru")
-        if result and result.get("title"):
-            # Try to also get an English title via a second GB call (no lang restrict)
-            en_result = await _fetch_google_books(title)
-            return {
-                **result,
-                "title": en_result.get("title") or result["title"],  # English canonical
-                "title_ru": result["title"] if result["title"] != (en_result.get("title") or result["title"]) else None,
-                "description_ru": result.get("description"),
-                "description": en_result.get("description") or result.get("description"),
-                "cover_url": result.get("cover_url") or en_result.get("cover_url"),
-            }
-        # Fall back to OpenLibrary if GB found nothing
-        return await _fetch_book_openlibrary(title)
+        # For RU: run OL + GB (no restrict) + GB (ru restrict) all in parallel
+        ol, gb_any, gb_ru = await asyncio.gather(
+            _fetch_book_openlibrary(title),
+            _fetch_google_books(title),
+            _fetch_google_books(title, lang_restrict="ru"),
+        )
+        # Pick best source: prefer GB for cover/description, OL for genres/external_id
+        best = gb_any if gb_any.get("cover_url") or gb_any.get("description") else (gb_ru if gb_ru.get("cover_url") or gb_ru.get("description") else ol)
+        result = {
+            "external_id": ol.get("external_id"),
+            "external_source": best.get("external_source") or "google_books",
+            "title": gb_any.get("title") or ol.get("title") or title,  # English canonical
+            "creator": best.get("creator") or ol.get("creator"),
+            "year": best.get("year") or ol.get("year"),
+            "cover_url": gb_any.get("cover_url") or gb_ru.get("cover_url") or ol.get("cover_url"),
+            "description": gb_any.get("description") or ol.get("description"),
+            "genres": ol.get("genres") or gb_any.get("genres") or [],
+            "metadata_raw": ol.get("metadata_raw"),
+        }
+        # Store Russian description if available and different
+        ru_desc = gb_ru.get("description")
+        if ru_desc and ru_desc != result["description"]:
+            result["description_ru"] = ru_desc
+        # Store Russian title if different from English
+        ru_title = gb_ru.get("title")
+        if ru_title and ru_title != result["title"]:
+            result["title_ru"] = ru_title
+        return {k: v for k, v in result.items() if v is not None}
 
-    # EN users: OpenLibrary first, Google Books for description fallback
-    result = await _fetch_book_openlibrary(title)
-    if not result.get("description"):
-        gb = await _fetch_google_books(title)
-        if gb.get("description"):
-            result["description"] = gb["description"]
-        if not result.get("cover_url") and gb.get("cover_url"):
-            result["cover_url"] = gb["cover_url"]
-    return result
+    # EN users: OL + GB in parallel, merge
+    ol, gb = await asyncio.gather(
+        _fetch_book_openlibrary(title),
+        _fetch_google_books(title),
+    )
+    return {
+        "external_id": ol.get("external_id"),
+        "external_source": ol.get("external_source") or gb.get("external_source"),
+        "title": ol.get("title") or gb.get("title") or title,
+        "creator": ol.get("creator") or gb.get("creator"),
+        "year": ol.get("year") or gb.get("year"),
+        "cover_url": ol.get("cover_url") or gb.get("cover_url"),
+        "description": ol.get("description") or gb.get("description"),
+        "genres": ol.get("genres") or gb.get("genres") or [],
+        "metadata_raw": ol.get("metadata_raw"),
+    }
 
 
 async def _fetch_book_openlibrary(title: str) -> dict:
