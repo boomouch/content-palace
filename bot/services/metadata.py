@@ -443,12 +443,20 @@ async def fetch_book_candidates(title: str, lang_restrict: str = "ru", limit: in
             resp = await http.get(GB_BASE, params=params, timeout=8)
             items = resp.json().get("items", [])
         candidates = []
+        title_len = len(title.strip())
         for item in items:
             info = item.get("volumeInfo", {})
             t = info.get("title", "")
             authors = info.get("authors", [])
-            # Skip: no author (bibliographic indexes, magazines), non-Cyrillic titles
-            if not authors or not t or not _is_cyrillic(t):
+            # Skip: no author (bibliographic indexes, magazines)
+            if not authors or not t:
+                continue
+            # Skip: non-Cyrillic titles for Russian queries
+            if not _is_cyrillic(t):
+                continue
+            # Skip: title is much longer than the query — user typed "X" but result
+            # is "Long book subtitle mentioning X" (e.g. Fincher biography)
+            if len(t) > title_len * 2.5 + 10:
                 continue
             raw_date = info.get("publishedDate", "")
             year = int(raw_date[:4]) if raw_date and raw_date[:4].isdigit() else None

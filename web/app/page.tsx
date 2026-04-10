@@ -1075,6 +1075,7 @@ function applyUserPalette(telegramId: number) {
   const g = parseInt(p.bg.slice(3, 5), 16)
   const b = parseInt(p.bg.slice(5, 7), 16)
   root.style.setProperty('--nav-bg', `rgba(${r},${g},${b},0.94)`)
+  return p
 }
 
 // ── Main page ──
@@ -1092,6 +1093,7 @@ export default function Home() {
   const [lang, setLang] = useState<'en' | 'ru'>('en')
   const [users, setUsers] = useState<User[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [bgColor, setBgColor] = useState(USER_PALETTES[0].bg)
 
   // Load persisted lang + user from localStorage (URL param ?user= takes priority)
   useEffect(() => {
@@ -1113,7 +1115,10 @@ export default function Home() {
 
   // Apply per-user color palette whenever the active user changes
   useEffect(() => {
-    if (currentUser) applyUserPalette(currentUser.telegram_id)
+    if (currentUser) {
+      const p = applyUserPalette(currentUser.telegram_id)
+      setBgColor(p.bg)
+    }
   }, [currentUser])
 
   function switchUser(u: User) {
@@ -1197,7 +1202,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)', paddingBottom: '72px' }}>
+    <div className="min-h-screen" style={{ background: bgColor, transition: 'background 0.3s ease', paddingBottom: '72px' }}>
 
       {/* Top bar */}
       <header className="flex items-center justify-between px-5 pt-12 pb-4 gap-3">
