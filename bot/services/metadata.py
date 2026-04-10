@@ -76,41 +76,44 @@ async def fetch_kp_metadata(title: str, item_type: str, kp_id: int | None = None
         name_ru = r.get("name")  # Russian title (primary on Kinopoisk)
         name_en = r.get("enName") or r.get("alternativeName")
 
-        # If no English name, try TMDB using the embedded TMDB ID from KP — direct fetch, no search
-        if not name_en:
-            tmdb_id_from_kp = (r.get("externalId") or {}).get("tmdb")
-            if tmdb_id_from_kp:
-                endpoint_tmdb = "tv" if r.get("isSeries") else "movie"
-                title_key_tmdb = "name" if r.get("isSeries") else "title"
-                try:
-                    async with httpx.AsyncClient() as http:
-                        tmdb_resp = await http.get(
-                            f"{TMDB_BASE}/{endpoint_tmdb}/{tmdb_id_from_kp}",
-                            headers={"Authorization": f"Bearer {TMDB_TOKEN}"},
-                            params={"language": "en-US"},
-                            timeout=5,
-                        )
-                        tmdb_data = tmdb_resp.json()
+        # Fetch English title, description, and genres from TMDB using KP's embedded TMDB ID
+        tmdb_id_from_kp = (r.get("externalId") or {}).get("tmdb")
+        description_en = None
+        genres_en = genres  # fallback to KP genres if TMDB unavailable
+        if tmdb_id_from_kp:
+            endpoint_tmdb = "tv" if r.get("isSeries") else "movie"
+            title_key_tmdb = "name" if r.get("isSeries") else "title"
+            try:
+                async with httpx.AsyncClient() as http:
+                    tmdb_resp = await http.get(
+                        f"{TMDB_BASE}/{endpoint_tmdb}/{tmdb_id_from_kp}",
+                        headers={"Authorization": f"Bearer {TMDB_TOKEN}"},
+                        params={"language": "en-US"},
+                        timeout=5,
+                    )
+                    tmdb_data = tmdb_resp.json()
+                if not name_en:
                     name_en = tmdb_data.get(title_key_tmdb) or None
-                except Exception:
-                    pass
+                description_en = tmdb_data.get("overview") or None
+                genres_en = [g["name"].lower() for g in tmdb_data.get("genres", [])] or genres
+            except Exception:
+                pass
 
         result = {
             "external_id": str(kp_id),
             "external_source": "kinopoisk",
-            "title": name_en or name_ru or title,  # English canonical for DB
+            "title": name_en or name_ru or title,  # English canonical
             "creator": director,
             "year": r.get("year"),
-            "description": r.get("description") or r.get("shortDescription"),
+            "description": description_en,           # English from TMDB
+            "description_ru": r.get("description") or r.get("shortDescription"),  # Russian from KP
             "cover_url": (r.get("poster") or {}).get("url"),
-            "genres": genres,
-            "genres_ru": genres,  # KP genres are already in Russian
+            "genres": genres_en,                     # English from TMDB
+            "genres_ru": genres,                     # Russian from KP
             "metadata_raw": r,
         }
         if name_ru and name_ru != result["title"]:
             result["title_ru"] = name_ru
-        if r.get("description"):
-            result["description_ru"] = r["description"]
         return result
     except Exception:
         return {}
