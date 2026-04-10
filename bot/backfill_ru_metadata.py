@@ -43,24 +43,19 @@ async def backfill_film(item: dict) -> dict | None:
     data = await fetch_kp_metadata(title, item["type"])
     if not data:
         return None
-    update = {}
-    # English fields (for EN toggle)
-    if data.get("description"):
-        update["description"] = data["description"]
-    if data.get("genres"):
-        update["genres"] = data["genres"]
-    if data.get("title") and data["title"] != title:
+    update: dict = {}
+    if data.get("title"):
         update["title"] = data["title"]
-    if data.get("title_ru"):
-        update["title_ru"] = data["title_ru"]
-    # Russian fields (for RU mode)
-    if data.get("description_ru"):
-        update["description_ru"] = data["description_ru"]
-    if data.get("genres_ru"):
-        update["genres_ru"] = data["genres_ru"]
+    # ALWAYS overwrite title_ru, description, genres — even if empty/null —
+    # to clear stale Russian text that may be sitting in the English fields.
+    update["title_ru"] = data.get("title_ru")
+    update["description"] = data.get("description")        # None = clear old Russian
+    update["description_ru"] = data.get("description_ru")
+    update["genres"] = data.get("genres") or []            # [] = clear old Russian genres
+    update["genres_ru"] = data.get("genres_ru") or []
     if data.get("cover_url"):
         update["cover_url"] = data["cover_url"]
-    return update if update else None
+    return update
 
 
 async def backfill_book(item: dict) -> dict | None:
@@ -68,22 +63,17 @@ async def backfill_book(item: dict) -> dict | None:
     data = await _fetch_book(title, lang="ru")
     if not data:
         return None
-    update = {}
+    update: dict = {}
     if data.get("title"):
         update["title"] = data["title"]
-    if data.get("title_ru"):
-        update["title_ru"] = data["title_ru"]
-    if data.get("description"):
-        update["description"] = data["description"]
-    if data.get("description_ru"):
-        update["description_ru"] = data["description_ru"]
-    if data.get("genres"):
-        update["genres"] = data["genres"]
-    if data.get("genres_ru"):
-        update["genres_ru"] = data["genres_ru"]
+    update["title_ru"] = data.get("title_ru")
+    update["description"] = data.get("description")        # None = clear old Russian
+    update["description_ru"] = data.get("description_ru")
+    update["genres"] = data.get("genres") or []            # [] = clear old Russian genres
+    update["genres_ru"] = data.get("genres_ru") or []
     if data.get("cover_url") and not item.get("cover_url"):
         update["cover_url"] = data["cover_url"]
-    return update if update else None
+    return update
 
 
 async def main():
