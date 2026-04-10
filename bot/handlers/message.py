@@ -768,7 +768,7 @@ async def _send_confirmation(update: Update, item: dict, action: str, status: st
             link_text = "Открыть список" if lang == "ru" else "Open Want List"
             msg += f"\n[{link_text}]({url})"
 
-    await update.message.reply_text(msg, parse_mode="Markdown")
+    await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
 
 
 async def _ask_feeling(update: Update, telegram_id: int, item_id: str):
@@ -1023,7 +1023,7 @@ async def _finish_entry(update: Update, context: ContextTypes.DEFAULT_TYPE, tele
         link_text = "Открыть в Content Palace" if lang == "ru" else "View in Content Palace"
         msg += f"\n\n[{link_text}]({url})"
 
-    await update.message.reply_text(msg, parse_mode="Markdown")
+    await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
 
     if item.get("summary"):
         context.application.create_task(_generate_and_save_tags(item_id, item))

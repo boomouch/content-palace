@@ -437,24 +437,24 @@ async def _fetch_book(title: str, lang: str = "en") -> dict:
         best = gb_any if gb_any.get("cover_url") or gb_any.get("description") else (gb_ru if gb_ru.get("cover_url") or gb_ru.get("description") else ol)
         result = {
             "external_id": ol.get("external_id"),
-            "external_source": best.get("external_source") or "google_books",
+            "external_source": gb_any.get("external_source") or ol.get("external_source") or "google_books",
             "title": gb_any.get("title") or ol.get("title") or title,  # English canonical
-            "creator": best.get("creator") or ol.get("creator"),
-            "year": best.get("year") or ol.get("year"),
+            "creator": gb_any.get("creator") or gb_ru.get("creator") or ol.get("creator"),
+            "year": gb_any.get("year") or gb_ru.get("year") or ol.get("year"),
             "cover_url": gb_any.get("cover_url") or gb_ru.get("cover_url") or ol.get("cover_url"),
+            # EN description in canonical field, RU description in _ru field
             "description": gb_any.get("description") or ol.get("description"),
+            "description_ru": gb_ru.get("description"),
+            # EN genres in canonical field, RU genres in _ru field
             "genres": ol.get("genres") or gb_any.get("genres") or [],
+            "genres_ru": gb_ru.get("genres") or [],
             "metadata_raw": ol.get("metadata_raw"),
         }
-        # Store Russian description if available and different
-        ru_desc = gb_ru.get("description")
-        if ru_desc and ru_desc != result["description"]:
-            result["description_ru"] = ru_desc
         # Store Russian title if different from English
         ru_title = gb_ru.get("title")
         if ru_title and ru_title != result["title"]:
             result["title_ru"] = ru_title
-        return {k: v for k, v in result.items() if v is not None}
+        return {k: v for k, v in result.items() if v is not None and v != []}
 
     # EN users: OL + GB in parallel, merge
     ol, gb = await asyncio.gather(
