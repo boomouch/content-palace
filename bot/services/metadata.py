@@ -474,7 +474,12 @@ async def _fetch_book(title: str, lang: str = "en") -> dict:
         # Step 1: find the Russian edition to get author + Russian metadata
         gb_ru = await _fetch_google_books(title, lang_restrict="ru")
         author = gb_ru.get("creator")
-        title_ru = gb_ru.get("title") or title
+        # Trust gb_ru title only if it's Cyrillic — Google Books sometimes stores
+        # transliterated titles (e.g. "Zaščita Lužina") even for Russian editions
+        gb_ru_title = gb_ru.get("title", "")
+        if gb_ru_title and not _is_cyrillic(gb_ru_title):
+            gb_ru = {}  # discard — not a real Russian edition result
+        title_ru = gb_ru.get("title") or title  # fall back to what user typed
 
         # Step 2: search for English edition in parallel — OL often has English titles for translated works
         gb_en, ol = await asyncio.gather(
@@ -504,7 +509,8 @@ async def _fetch_book(title: str, lang: str = "en") -> dict:
             "year": gb_en.get("year") or gb_ru.get("year") or ol.get("year"),
             "cover_url": gb_en.get("cover_url") or gb_ru.get("cover_url") or ol.get("cover_url"),
             "description": gb_en.get("description") or ol.get("description"),  # English only
-            "description_ru": gb_ru.get("description"),                         # Russian only
+            # Only store RU description if it's actually in Russian
+            "description_ru": gb_ru.get("description") if _is_cyrillic(gb_ru.get("description") or "") else None,
             "genres": ol.get("genres") or gb_en.get("genres") or [],            # English
             "genres_ru": gb_ru.get("genres") or [],                              # Russian
             "metadata_raw": ol.get("metadata_raw"),
