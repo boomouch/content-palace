@@ -695,7 +695,7 @@ Rules:
         tags = json.loads(raw)
         database.update_item(item_id, {"vibe_tags": tags})
 
-        # For RU users: copy to _ru columns (no translation needed — content is already in RU)
+        # For RU users: copy to _ru columns, then translate to EN for base columns
         if lang == "ru":
             ru_copy: dict = {}
             if highlights:
@@ -706,6 +706,16 @@ Rules:
                 ru_copy["vibe_tags_ru"] = tags
             if ru_copy:
                 database.update_item(item_id, ru_copy)
+            # Translate RU → EN so the language toggle shows English content
+            translated_en = ai_parser.translate_content(highlights, summary, tags, target_lang="en")
+            if translated_en:
+                en_update: dict = {}
+                if translated_en.get("highlights"):
+                    en_update["summary"] = json.dumps(translated_en["highlights"], ensure_ascii=False)
+                if translated_en.get("vibe_tags"):
+                    en_update["vibe_tags"] = translated_en["vibe_tags"]
+                if en_update:
+                    database.update_item(item_id, en_update)
     except Exception:
         pass
 
@@ -1128,6 +1138,16 @@ Rules: 2-4 tags, no overlap, short lowercase. JSON only, no markdown fences."""}
                 ru_copy["vibe_tags_ru"] = tags
             if ru_copy:
                 database.update_item(item_id, ru_copy)
+            # Translate RU → EN so the language toggle shows English content
+            translated_en = ai_parser.translate_content(fresh_highlights, raw_summary, tags, target_lang="en")
+            if translated_en:
+                en_update: dict = {}
+                if translated_en.get("highlights"):
+                    en_update["summary"] = _json.dumps(translated_en["highlights"], ensure_ascii=False)
+                if translated_en.get("vibe_tags"):
+                    en_update["vibe_tags"] = translated_en["vibe_tags"]
+                if en_update:
+                    database.update_item(item_id, en_update)
         else:
             # Content in English — translate to Russian and save to _ru columns
             translated = ai_parser.translate_content(

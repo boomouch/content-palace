@@ -169,6 +169,25 @@ def translate_content(highlights: list, summary: str, vibe_tags: list, target_la
         return {}
 
 
+def get_english_title(title_ru: str, author_ru: str | None = None) -> str | None:
+    """Ask Claude Haiku for the English original title of a Russian book.
+    Returns None if the book is originally Russian or the title is unknown."""
+    prompt = f'What is the original English title of the book "{title_ru}"'
+    if author_ru:
+        prompt += f' by "{author_ru}"'
+    prompt += '? Reply with ONLY the English title, nothing else. If the book was originally written in Russian (not translated from another language), or if you are not certain, reply exactly: UNKNOWN'
+    try:
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=30,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        result = response.content[0].text.strip().strip('"').strip("'")
+        return None if result.upper() == "UNKNOWN" or not result else result
+    except Exception:
+        return None
+
+
 def _clean_json(text: str) -> str:
     text = text.strip()
     if text.startswith("```"):

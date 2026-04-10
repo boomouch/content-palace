@@ -550,6 +550,22 @@ async def _fetch_book(title: str, lang: str = "en", author: str | None = None) -
 
         title_en = gb_en.get("title") or ol.get("title")
 
+        # If no English title found, this may be a foreign book translated to Russian.
+        # Ask Claude Haiku for the English original, then fetch EN metadata from scratch.
+        if not title_en:
+            from . import ai_parser as _ai
+            en_lookup = _ai.get_english_title(title_ru, author)
+            if en_lookup:
+                gb_en2, ol2 = await asyncio.gather(
+                    _fetch_google_books(en_lookup),
+                    _fetch_book_openlibrary(en_lookup),
+                )
+                if gb_en2.get("title") and not _is_cyrillic(gb_en2.get("title", "")):
+                    gb_en = gb_en2
+                if ol2.get("title") and not _is_cyrillic(ol2.get("title", "")):
+                    ol = ol2
+                title_en = gb_en.get("title") or ol.get("title")
+
         result: dict = {
             "external_id": ol.get("external_id"),
             "external_source": "google_books",

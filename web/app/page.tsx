@@ -1065,8 +1065,8 @@ const USER_PALETTES = [
   { bg: '#f2edf0', card2: '#e8dfe4', border: '#dcd0d8' }, // warm mauve
 ]
 
-function applyUserPalette(telegramId: number) {
-  const p = USER_PALETTES[Math.abs(telegramId) % USER_PALETTES.length]
+function applyUserPalette(idx: number) {
+  const p = USER_PALETTES[idx % USER_PALETTES.length]
   const root = document.documentElement
   root.style.setProperty('--bg', p.bg)
   root.style.setProperty('--card-bg2', p.card2)
@@ -1113,13 +1113,16 @@ export default function Home() {
       })
   }, [])
 
-  // Apply per-user color palette whenever the active user changes
+  // Apply per-user color palette whenever the active user changes.
+  // Use position in the users array so every user gets a distinct color
+  // regardless of how their telegram IDs happen to distribute mod 8.
   useEffect(() => {
-    if (currentUser) {
-      const p = applyUserPalette(currentUser.telegram_id)
+    if (currentUser && users.length > 0) {
+      const idx = users.findIndex(u => u.telegram_id === currentUser.telegram_id)
+      const p = applyUserPalette(idx >= 0 ? idx : 0)
       setBgColor(p.bg)
     }
-  }, [currentUser])
+  }, [currentUser, users])
 
   function switchUser(u: User) {
     setCurrentUser(u)
