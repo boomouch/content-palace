@@ -428,12 +428,13 @@ def _is_bad_ol_title(s: str) -> bool:
 
 
 async def fetch_book_candidates(title: str, lang_restrict: str = "ru", limit: int = 3) -> list[dict]:
-    """Search Google Books and return multiple candidates for disambiguation."""
+    """Search Google Books by intitle: and return real book candidates for disambiguation.
+    Filters out junk results (no author, non-Cyrillic titles for RU queries)."""
     try:
         params: dict = {
-            "q": title,  # plain query — better recall than intitle: for disambiguation
-            "maxResults": limit,
-            "fields": "items/volumeInfo(title,authors,publishedDate,imageLinks)",
+            "q": f"intitle:{title}",
+            "maxResults": 8,  # fetch more, then filter down to limit
+            "fields": "items/volumeInfo(title,authors,publishedDate)",
             "langRestrict": lang_restrict,
         }
         if GB_KEY:
@@ -445,16 +446,19 @@ async def fetch_book_candidates(title: str, lang_restrict: str = "ru", limit: in
         for item in items:
             info = item.get("volumeInfo", {})
             t = info.get("title", "")
-            if not t or not _is_cyrillic(t):
-                continue
             authors = info.get("authors", [])
+            # Skip: no author (bibliographic indexes, magazines), non-Cyrillic titles
+            if not authors or not t or not _is_cyrillic(t):
+                continue
             raw_date = info.get("publishedDate", "")
             year = int(raw_date[:4]) if raw_date and raw_date[:4].isdigit() else None
             candidates.append({
                 "title": t,
-                "creator": authors[0] if authors else None,
+                "creator": authors[0],
                 "year": year,
             })
+            if len(candidates) >= limit:
+                break
         return candidates
     except Exception:
         return []
