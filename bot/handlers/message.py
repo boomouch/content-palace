@@ -759,9 +759,9 @@ async def _send_reflection_question_from_callback(query, telegram_id: int, item_
         pass
 
 
-async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None, lang: str = "en", kp_id: int | None = None):
+async def _fetch_and_update_metadata(item_id: str, title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None, lang: str = "en", kp_id: int | None = None, creator: str | None = None):
     try:
-        data = await metadata.fetch_metadata(title, item_type, source_url, tmdb_id=tmdb_id, lang=lang, kp_id=kp_id)
+        data = await metadata.fetch_metadata(title, item_type, source_url, tmdb_id=tmdb_id, lang=lang, kp_id=kp_id, creator=creator)
         if data:
             # For RU entries: allow title update so English canonical gets stored
             # (KP metadata resolves English via TMDB fallback)
@@ -946,7 +946,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         item_data = {
             "type": item_type,
             "title": final_title,
-            "creator": parsed.get("creator"),
+            "creator": (chosen.get("creator") if chosen else None) or parsed.get("creator"),
             "status": status,
             "raw_messages": [original_text],
             "source_url": parsed.get("source_url"),
@@ -982,7 +982,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chosen_tmdb_id = chosen.get("tmdb_id") if chosen else None
         chosen_kp_id = chosen.get("kp_id") if chosen else None
         context.application.create_task(
-            _fetch_and_update_metadata(item_id, final_title, item_type, parsed.get("source_url"), tmdb_id=chosen_tmdb_id, lang=pick_lang, kp_id=chosen_kp_id)
+            _fetch_and_update_metadata(item_id, final_title, item_type, parsed.get("source_url"), tmdb_id=chosen_tmdb_id, lang=pick_lang, kp_id=chosen_kp_id, creator=chosen.get("creator") if chosen else None)
         )
 
         type_emoji = {"book": "📚", "film": "🎬", "show": "📺", "other": "✦"}

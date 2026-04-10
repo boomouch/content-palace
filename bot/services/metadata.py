@@ -166,10 +166,10 @@ async def fetch_tmdb_candidates(title: str, item_type: str, limit: int = 3, lang
         return []
 
 
-async def fetch_metadata(title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None, lang: str = "en", kp_id: int | None = None) -> dict:
+async def fetch_metadata(title: str, item_type: str, source_url: str | None = None, tmdb_id: int | None = None, lang: str = "en", kp_id: int | None = None, creator: str | None = None) -> dict:
     """Fetch metadata for a given title and type. Returns enriched data dict."""
     if item_type == "book":
-        return await _fetch_book(title, lang=lang)
+        return await _fetch_book(title, lang=lang, author=creator)
     elif item_type in ("film", "show"):
         if lang == "ru":
             return await fetch_kp_metadata(title, item_type, kp_id=kp_id)
@@ -473,14 +473,15 @@ async def fetch_book_candidates(title: str, lang_restrict: str = "ru", limit: in
 
 
 async def _fetch_google_books(title: str, author: str | None = None, lang_restrict: str | None = None) -> dict:
-    """Fetch book metadata from Google Books API. Uses intitle: for precision."""
+    """Fetch book metadata from Google Books API. Uses intitle: for precision.
+    Fetches up to 5 results and picks the best one (cover preferred over no cover)."""
     try:
         q = f"intitle:{title}"
         if author:
             q += f"+inauthor:{author}"
         params: dict = {
             "q": q,
-            "maxResults": 1,
+            "maxResults": 5,
             "fields": "items/volumeInfo(title,authors,publishedDate,description,imageLinks,categories)",
         }
         if GB_KEY:
@@ -492,7 +493,9 @@ async def _fetch_google_books(title: str, author: str | None = None, lang_restri
             items = resp.json().get("items", [])
         if not items:
             return {}
-        info = items[0].get("volumeInfo", {})
+        # Pick first result with a cover; fall back to first result overall
+        best = next((i for i in items if (i.get("volumeInfo") or {}).get("imageLinks")), items[0])
+        info = best.get("volumeInfo", {})
         cover_url = (info.get("imageLinks") or {}).get("thumbnail")
         if cover_url:
             cover_url = cover_url.replace("zoom=1", "zoom=3").replace("&edge=curl", "")
@@ -513,11 +516,13 @@ async def _fetch_google_books(title: str, author: str | None = None, lang_restri
         return {}
 
 
-async def _fetch_book(title: str, lang: str = "en") -> dict:
+async def _fetch_book(title: str, lang: str = "en", author: str | None = None) -> dict:
     """Fetch book metadata. Always stores both EN and RU fields so language toggle works."""
     if lang == "ru":
-        # Step 1: find the Russian edition to get author + Russian metadata
-        gb_ru = await _fetch_google_books(title, lang_restrict="ru")
+        # Step 1: find the Russian edition to get author + Russian metadata.
+        # Use inauthor: filter when known so we get the right edition with cover/description.
+        # No lang_restrict — it's too narrow and often returns coverless editions.
+        gb_ru = await _fetch_google_books(title, author=author, lang_restrict=None)
         author = gb_ru.get("creator")
         # Trust gb_ru title only if it's Cyrillic — Google Books sometimes stores
         # transliterated titles (e.g. "Zaščita Lužina") even for Russian editions
