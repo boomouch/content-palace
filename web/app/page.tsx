@@ -1053,6 +1053,30 @@ function ProfileBadge({
   )
 }
 
+// ── Per-user pastel palettes ──
+const USER_PALETTES = [
+  { bg: '#f5f0e8', card2: '#ede8df', border: '#e0d8cc' }, // warm sand (default)
+  { bg: '#eef2ec', card2: '#e3ede0', border: '#d4e6cf' }, // sage green
+  { bg: '#eeedf5', card2: '#e3e1f0', border: '#d4d1e8' }, // lavender
+  { bg: '#f5ecec', card2: '#ede0e0', border: '#e0d0d0' }, // dusty rose
+  { bg: '#edf3f8', card2: '#ddeaf3', border: '#cce0ee' }, // sky blue
+  { bg: '#f5eeeb', card2: '#ede3de', border: '#e0d4cd' }, // peach
+  { bg: '#eaf4f2', card2: '#daeee9', border: '#cae5df' }, // mint
+  { bg: '#f2edf0', card2: '#e8dfe4', border: '#dcd0d8' }, // warm mauve
+]
+
+function applyUserPalette(telegramId: number) {
+  const p = USER_PALETTES[Math.abs(telegramId) % USER_PALETTES.length]
+  const root = document.documentElement
+  root.style.setProperty('--bg', p.bg)
+  root.style.setProperty('--card-bg2', p.card2)
+  root.style.setProperty('--border', p.border)
+  const r = parseInt(p.bg.slice(1, 3), 16)
+  const g = parseInt(p.bg.slice(3, 5), 16)
+  const b = parseInt(p.bg.slice(5, 7), 16)
+  root.style.setProperty('--nav-bg', `rgba(${r},${g},${b},0.94)`)
+}
+
 // ── Main page ──
 export default function Home() {
   const [tab, setTab] = useState<'library' | 'want' | 'discover' | 'profile'>('library')
@@ -1086,6 +1110,11 @@ export default function Home() {
         }
       })
   }, [])
+
+  // Apply per-user color palette whenever the active user changes
+  useEffect(() => {
+    if (currentUser) applyUserPalette(currentUser.telegram_id)
+  }, [currentUser])
 
   function switchUser(u: User) {
     setCurrentUser(u)
@@ -1314,7 +1343,7 @@ export default function Home() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-30 flex"
         style={{
-          background: 'rgba(245,240,232,0.94)',
+          background: 'var(--nav-bg, rgba(245,240,232,0.94))',
           backdropFilter: 'blur(16px)',
           borderTop: '1px solid var(--border)',
           paddingBottom: 'env(safe-area-inset-bottom)',
