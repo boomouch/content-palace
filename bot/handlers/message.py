@@ -100,6 +100,38 @@ _STATUS_MAP = {
 }
 
 
+async def _show_kp_picker(update, context, candidates: list, parsed: dict, telegram_id: int, lang: str, text: str):
+    """Show Kinopoisk disambiguation picker. Used as fallback when AI parser can't identify the title."""
+    raw_status = parsed.get("status", "want")
+    status = raw_status if raw_status in ("want", "in_progress", "done", "abandoned") else "want"
+    item_type = parsed.get("type", "film") if parsed.get("type") in ("film", "show") else "film"
+    candidates.sort(key=lambda c: c.get("year") or 0, reverse=True)
+    context.bot_data[f"pending_{telegram_id}"] = {
+        "parsed": {**parsed, "status": status, "type": item_type},
+        "item_type": item_type,
+        "status": status,
+        "subtype": None,
+        "text": text,
+        "candidates": candidates,
+        "lang": lang,
+    }
+    keyboard = [
+        [InlineKeyboardButton(
+            f"{c['title']} ({c['year'] or '?'})",
+            callback_data=f"pick_media:{telegram_id}:{i}"
+        )]
+        for i, c in enumerate(candidates)
+    ]
+    keyboard.append([InlineKeyboardButton("Это не то — сохранить как введено", callback_data=f"pick_media:{telegram_id}:none")])
+    keyboard.append([InlineKeyboardButton("❌ Отмена — не добавлять", callback_data=f"pick_media:{telegram_id}:cancel")])
+    query_title = parsed.get("title") or text
+    await update.message.reply_text(
+        f"Нашла несколько вариантов для *{query_title}* — какой?",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = update.effective_user.id
     telegram_handle = update.effective_user.username
@@ -236,13 +268,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(answer)
         return
 
-    # No media item detected
+    # No media item detected — for RU users try KP search before giving up
     if not parsed.get("title"):
+        if lang == "ru":
+            kp_fallback = await metadata.fetch_kp_candidates(text, limit=3)
+            if kp_fallback:
+                await _show_kp_picker(update, context, kp_fallback, parsed, telegram_id, lang, text)
+                return
         await update.message.reply_text(ai_parser.quick_reply("not_understood", lang))
         return
 
-    # Low confidence — ask for clarification
+    # Low confidence — for RU users try KP search first
     if parsed.get("confidence") == "low":
+        if lang == "ru":
+            kp_fallback = await metadata.fetch_kp_candidates(text, limit=3)
+            if kp_fallback:
+                await _show_kp_picker(update, context, kp_fallback, parsed, telegram_id, lang, text)
+                return
         _low_title = parsed.get("title", "")
         if lang == "ru":
             clarification = f"Не поняла — уточни: _фильм {_low_title}_, _сериал {_low_title}_ или _книга {_low_title}_" if _low_title else "Не поняла — напиши, например: «посмотрела Дюну» или «читаю Сапиенс»"

@@ -46,7 +46,7 @@ Rules:
   - "waste of time/hate/terrible/awful/worst/regret watching" → regret
 - If type is ambiguous, set confidence: low and explain in ambiguity field
 - If no clear media item is mentioned, set title: null
-- title: use the most recognizable English name of the work (e.g. "мизери" → "Misery", "дюна" → "Dune"). For titles already in English, keep as-is."""
+- title: keep the title exactly as the user wrote it. Do NOT translate. If they wrote "парень из пузыря" keep it as "парень из пузыря". If they wrote "Dune" keep it as "Dune"."""
 
 REFLECT_PROMPT_Q1 = """You are asking a friend one question after they logged something they finished.
 
