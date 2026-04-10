@@ -408,11 +408,14 @@ async def _fetch_youtube(url: str, title: str) -> dict:
         return {}
 
 
-async def _fetch_google_books(query: str, lang_restrict: str | None = None) -> dict:
-    """Fetch book metadata from Google Books API."""
+async def _fetch_google_books(title: str, author: str | None = None, lang_restrict: str | None = None) -> dict:
+    """Fetch book metadata from Google Books API. Uses intitle: for precision."""
     try:
+        q = f"intitle:{title}"
+        if author:
+            q += f"+inauthor:{author}"
         params: dict = {
-            "q": query,  # plain query — broader match than intitle:
+            "q": q,
             "maxResults": 1,
             "fields": "items/volumeInfo(title,authors,publishedDate,description,imageLinks,categories)",
         }
@@ -432,51 +435,52 @@ async def _fetch_google_books(query: str, lang_restrict: str | None = None) -> d
         authors = info.get("authors", [])
         raw_date = info.get("publishedDate", "")
         year = int(raw_date[:4]) if raw_date and raw_date[:4].isdigit() else None
-        categories = info.get("categories", [])
         description = (info.get("description") or "").strip()
         return {
             "external_source": "google_books",
-            "title": info.get("title", query),
+            "title": info.get("title", title),
             "creator": authors[0] if authors else None,
             "year": year,
             "description": description[:500] if description else None,
             "cover_url": cover_url,
-            "genres": [c.lower() for c in categories[:5]],
+            "genres": [c.lower() for c in (info.get("categories") or [])[:5]],
         }
     except Exception:
         return {}
 
 
 async def _fetch_book(title: str, lang: str = "en") -> dict:
-    """Fetch book metadata. Runs OL and GB in parallel, merges best results."""
+    """Fetch book metadata. Always stores both EN and RU fields so language toggle works."""
     if lang == "ru":
-        # For RU: run OL + GB (no restrict) + GB (ru restrict) all in parallel
-        ol, gb_any, gb_ru = await asyncio.gather(
+        # Step 1: find the Russian edition to get author + Russian metadata
+        gb_ru = await _fetch_google_books(title, lang_restrict="ru")
+        author = gb_ru.get("creator")
+
+        # Step 2: find English edition using same title + author for precision
+        gb_en, ol = await asyncio.gather(
+            _fetch_google_books(title, author=author),
             _fetch_book_openlibrary(title),
-            _fetch_google_books(title),
-            _fetch_google_books(title, lang_restrict="ru"),
         )
-        # Pick best source: prefer GB for cover/description, OL for genres/external_id
-        best = gb_any if gb_any.get("cover_url") or gb_any.get("description") else (gb_ru if gb_ru.get("cover_url") or gb_ru.get("description") else ol)
-        result = {
+
+        # English canonical title: prefer GB-EN, fall back to OL, then GB-RU
+        title_en = gb_en.get("title") or ol.get("title")
+        title_ru = gb_ru.get("title")
+
+        result: dict = {
             "external_id": ol.get("external_id"),
-            "external_source": gb_any.get("external_source") or ol.get("external_source") or "google_books",
-            "title": gb_any.get("title") or ol.get("title") or title,  # English canonical
-            "creator": gb_any.get("creator") or gb_ru.get("creator") or ol.get("creator"),
-            "year": gb_any.get("year") or gb_ru.get("year") or ol.get("year"),
-            "cover_url": gb_any.get("cover_url") or gb_ru.get("cover_url") or ol.get("cover_url"),
-            # EN description in canonical field, RU description in _ru field
-            "description": gb_any.get("description") or ol.get("description"),
-            "description_ru": gb_ru.get("description"),
-            # EN genres in canonical field, RU genres in _ru field
-            "genres": ol.get("genres") or gb_any.get("genres") or [],
-            "genres_ru": gb_ru.get("genres") or [],
+            "external_source": "google_books",
+            "title": title_en or title_ru or title,          # English canonical
+            "creator": author or ol.get("creator"),
+            "year": gb_en.get("year") or gb_ru.get("year") or ol.get("year"),
+            "cover_url": gb_en.get("cover_url") or gb_ru.get("cover_url") or ol.get("cover_url"),
+            "description": gb_en.get("description") or ol.get("description"),  # English
+            "description_ru": gb_ru.get("description"),                         # Russian
+            "genres": ol.get("genres") or gb_en.get("genres") or [],           # English
+            "genres_ru": gb_ru.get("genres") or [],                             # Russian
             "metadata_raw": ol.get("metadata_raw"),
         }
-        # Store Russian title if different from English
-        ru_title = gb_ru.get("title")
-        if ru_title and ru_title != result["title"]:
-            result["title_ru"] = ru_title
+        if title_ru and title_ru != result["title"]:
+            result["title_ru"] = title_ru
         return {k: v for k, v in result.items() if v is not None and v != []}
 
     # EN users: OL + GB in parallel, merge
@@ -484,7 +488,7 @@ async def _fetch_book(title: str, lang: str = "en") -> dict:
         _fetch_book_openlibrary(title),
         _fetch_google_books(title),
     )
-    return {
+    return {k: v for k, v in {
         "external_id": ol.get("external_id"),
         "external_source": ol.get("external_source") or gb.get("external_source"),
         "title": ol.get("title") or gb.get("title") or title,
@@ -494,7 +498,7 @@ async def _fetch_book(title: str, lang: str = "en") -> dict:
         "description": ol.get("description") or gb.get("description"),
         "genres": ol.get("genres") or gb.get("genres") or [],
         "metadata_raw": ol.get("metadata_raw"),
-    }
+    }.items() if v is not None and v != []}
 
 
 async def _fetch_book_openlibrary(title: str) -> dict:

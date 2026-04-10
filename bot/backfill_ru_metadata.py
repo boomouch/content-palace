@@ -65,11 +65,20 @@ async def backfill_film(item: dict) -> dict | None:
 
 async def backfill_book(item: dict) -> dict | None:
     title = item.get("title_ru") or item["title"]
-    gb_ru = await _fetch_google_books(title, lang_restrict="ru")
+    gb_en, gb_ru = await asyncio.gather(
+        _fetch_google_books(title),
+        _fetch_google_books(title, lang_restrict="ru"),
+    )
     update = {}
-    if gb_ru.get("description") and not item.get("description_ru"):
+    if gb_en.get("description"):
+        update["description"] = gb_en["description"]
+    if gb_en.get("genres"):
+        update["genres"] = gb_en["genres"]
+    if gb_en.get("cover_url") and not item.get("cover_url"):
+        update["cover_url"] = gb_en["cover_url"]
+    if gb_ru.get("description"):
         update["description_ru"] = gb_ru["description"]
-    if gb_ru.get("genres") and not item.get("genres_ru"):
+    if gb_ru.get("genres"):
         update["genres_ru"] = gb_ru["genres"]
     return update if update else None
 
